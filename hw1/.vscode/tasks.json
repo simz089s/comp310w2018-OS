@@ -1,0 +1,71 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile and build as1p2 (gcc GNU99 + debug GDB)",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-Wpedantic",
+                "-Wall",
+                "-Wextra",
+                "-std=gnu99",
+                "-Wno-unused",
+                "-g",
+                "-ggdb",
+                "as1p2.c",
+                "-o",
+                "as1p2"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Compile and build (clang GNU11 + debug GDB)",
+            "type": "shell",
+            "command": "clang",
+            "args": [
+                "-Wpedantic",
+                "-Wall",
+                "-Wextra",
+                "-std=gnu11",
+                "-Wno-unused",
+                "-g",
+                "-ggdb",
+                "as1p2.c",
+                "-o",
+                "as1p2"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Make",
+            "type": "shell",
+            "command": "make",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

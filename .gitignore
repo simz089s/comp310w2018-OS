@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+a1_command_piping
+a1_redirect
+as1p2
