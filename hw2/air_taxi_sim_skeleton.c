@@ -123,7 +123,7 @@ void *FnTaxi(void* pr_id)
 {
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 
   int num_airplanes;
