@@ -1,0 +1,71 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "gcc GNU99 hw2",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-Wpedantic",
+                "-Wall",
+                "-Wextra",
+                "-std=gnu99",
+                "-Wno-unused",
+                "-g",
+                "-ggdb",
+                "hw2/air_taxi_sim_skeleton.c",
+                "-o",
+                "hw2/air_taxi_sim_skeleton"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Compile and build (clang GNU11 + debug GDB)",
+            "type": "shell",
+            "command": "clang",
+            "args": [
+                "-Wpedantic",
+                "-Wall",
+                "-Wextra",
+                "-std=gnu11",
+                "-Wno-unused",
+                "-g",
+                "-ggdb",
+                "*.c",
+                "-o",
+                ""
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Make",
+            "type": "shell",
+            "command": "make",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

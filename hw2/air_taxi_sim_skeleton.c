@@ -10,8 +10,8 @@
  */
 
 //Please enter your name and McGill ID below
-//Name: <your name>
-//McGill ID: <magic number>
+//Name: Simon Zheng
+//McGill ID: 260744353
 
  
 
@@ -50,7 +50,7 @@ struct Queue* createQueue(unsigned capacity)
 // Queue is full when size becomes equal to the capacity 
 int isFull(struct Queue* queue)
 {
-    return ((queue->size ) >= queue->capacity);
+    return ((queue->size) >= queue->capacity);
 }
  
 // Queue is empty when size is 0
@@ -114,7 +114,7 @@ void print(struct Queue* queue){
 struct Queue* queue;
 
 /*Producer Function: Simulates an Airplane arriving and dumping 5-10 passengers to the taxi platform */
-void *FnAirplane(void* cl_id)
+void* FnAirplane(void* cl_id)
 {
 }
 
@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
   //declare arrays of threads and initialize semaphore(s)
 
   //create arrays of integer pointers to ids for taxi / airplane threads
-  int *taxi_ids[num_taxis];
-  int *airplane_ids[num_airplanes];
+  int* taxi_ids[num_taxis];
+  int* airplane_ids[num_airplanes];
     
   //create threads for airplanes
 
