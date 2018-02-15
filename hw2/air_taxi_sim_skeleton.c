@@ -103,12 +103,12 @@ void print(struct Queue* queue){
     if (queue->size == 0){
         return;
     }
-    
+
     for (int i = queue->front; i < queue->front +queue->size; i++){
         
         printf(" Element at position %d is %d \n ", i % (queue->capacity ), queue->array[i % (queue->capacity)]);
     }
-    
+
 }
 
 struct Queue* queue;
@@ -126,28 +126,57 @@ void *FnTaxi(void* pr_id)
 int main(int argc, char* argv[])
 {
 
-  int num_airplanes;
-  int num_taxis;
+    int num_airplanes;
+    int num_taxis;
 
-  num_airplanes=atoi(argv[1]);
-  num_taxis=atoi(argv[2]);
-  
-  printf("You entered: %d airplanes per hour\n",num_airplanes);
-  printf("You entered: %d taxis\n", num_taxis);
-  
-  
-  //initialize queue
-  queue = createQueue(BUFFER_SIZE);
-  
-  //declare arrays of threads and initialize semaphore(s)
+    num_airplanes=atoi(argv[1]);
+    num_taxis=atoi(argv[2]);
 
-  //create arrays of integer pointers to ids for taxi / airplane threads
-  int* taxi_ids[num_taxis];
-  int* airplane_ids[num_airplanes];
-    
-  //create threads for airplanes
+    printf("You entered: %d airplanes per hour\n",num_airplanes);
+    printf("You entered: %d taxis\n", num_taxis);
 
-  //create threads for taxis
-  
-  pthread_exit(NULL);
+
+    //initialize queue
+    queue = createQueue(BUFFER_SIZE);
+
+    //declare arrays of threads and initialize semaphore(s)
+    pthread_t airplanes[num_airplanes];
+    pthread_t taxis[num_taxis];
+    // pthread_t thread_array[num_airplanes + num_taxis];
+    sem_t mutex;
+    sem_init(&mutex, 0, 0);
+    int full = 0;
+    int empty = num_taxis;
+
+    //create arrays of integer pointers to ids for taxi / airplane threads
+    int* taxi_ids[num_taxis];
+    int* airplane_ids[num_airplanes];
+        
+    //create threads for airplanes
+    for (int i = 0; i < num_airplanes; i++)
+    {
+        pthread_t airplane;
+        while (pthread_create(&airplane, NULL, FnAirplane, NULL));
+        airplanes[i] = airplane;
+        airplane_ids[i] = &i;
+    }
+
+    //create threads for taxis
+    for (int i = 0; i < num_taxis; i++)
+    {
+        pthread_t taxi;
+        while (pthread_create(&taxi, NULL, FnTaxi, NULL));
+        taxis[i] = taxi;
+        taxi_ids[i] = &i;
+    }
+
+    pthread_exit(NULL);
+
+    // for (int i = 0; i < num_airplanes; i++)
+    // {
+    //     pthread_join(thread_array[i], NULL);
+    // }
+    // pthread_join(taxi, NULL);
+    // sem_destroy(&mutex);
+    // return EXIT_SUCCESS;
 }

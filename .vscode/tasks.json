@@ -8,8 +8,8 @@
             "type": "shell",
             "command": "gcc",
             "args": [
-                "-Wpedantic",
                 "-Wall",
+                "-Wpedantic",
                 "-Wextra",
                 "-std=gnu99",
                 "-Wno-unused",
@@ -17,7 +17,9 @@
                 "-ggdb",
                 "hw2/air_taxi_sim_skeleton.c",
                 "-o",
-                "hw2/air_taxi_sim_skeleton"
+                "hw2/air_taxi_sim_skeleton",
+                "-lpthread",
+                "-lrt"
             ],
             "presentation": {
                 "echo": true,
