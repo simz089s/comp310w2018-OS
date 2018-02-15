@@ -10,8 +10,8 @@
  */
 
 //Please enter your name and McGill ID below
-//Name: <your name>
-//McGill ID: <magic number>
+//Name: Simon Zheng
+//McGill ID: 260744353
 
  
 
@@ -50,7 +50,7 @@ struct Queue* createQueue(unsigned capacity)
 // Queue is full when size becomes equal to the capacity 
 int isFull(struct Queue* queue)
 {
-    return ((queue->size ) >= queue->capacity);
+    return ((queue->size) >= queue->capacity);
 }
  
 // Queue is empty when size is 0
@@ -103,51 +103,81 @@ void print(struct Queue* queue){
     if (queue->size == 0){
         return;
     }
-    
+
     for (int i = queue->front; i < queue->front +queue->size; i++){
         
         printf(" Element at position %d is %d \n ", i % (queue->capacity ), queue->array[i % (queue->capacity)]);
     }
-    
+
 }
 
 struct Queue* queue;
 
 /*Producer Function: Simulates an Airplane arriving and dumping 5-10 passengers to the taxi platform */
-void *FnAirplane(void* cl_id)
+void* FnAirplane(void* cl_id)
 {
 }
 
 /* Consumer Function: simulates a taxi that takes n time to take a passenger home and come back to the airport */
-void *FnTaxi(void* pr_id)
+void* FnTaxi(void* pr_id)
 {
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 
-  int num_airplanes;
-  int num_taxis;
+    int num_airplanes;
+    int num_taxis;
 
-  num_airplanes=atoi(argv[1]);
-  num_taxis=atoi(argv[2]);
-  
-  printf("You entered: %d airplanes per hour\n",num_airplanes);
-  printf("You entered: %d taxis\n", num_taxis);
-  
-  
-  //initialize queue
-  queue = createQueue(BUFFER_SIZE);
-  
-  //declare arrays of threads and initialize semaphore(s)
+    num_airplanes=atoi(argv[1]);
+    num_taxis=atoi(argv[2]);
 
-  //create arrays of integer pointers to ids for taxi / airplane threads
-  int *taxi_ids[num_taxis];
-  int *airplane_ids[num_airplanes];
-    
-  //create threads for airplanes
+    printf("You entered: %d airplanes per hour\n",num_airplanes);
+    printf("You entered: %d taxis\n", num_taxis);
 
-  //create threads for taxis
-  
-  pthread_exit(NULL);
+
+    //initialize queue
+    queue = createQueue(BUFFER_SIZE);
+
+    //declare arrays of threads and initialize semaphore(s)
+    pthread_t airplanes[num_airplanes];
+    pthread_t taxis[num_taxis];
+    sem_t mutex;
+    sem_t full;
+    sem_t empty;
+    sem_init(&mutex, 0, 1        );
+    sem_init(&full , 0, 0        );
+    sem_init(&empty, 0, num_taxis);
+
+    //create arrays of integer pointers to ids for taxi / airplane threads
+    int* taxi_ids[num_taxis];
+    int* airplane_ids[num_airplanes];
+
+    //create threads for airplanes
+    for (int i = 0; i < num_airplanes; i++)
+    {
+        pthread_t airplane;
+        while (pthread_create(&airplane, NULL, FnAirplane, NULL));
+        airplanes[i] = airplane;
+        airplane_ids[i] = &i;
+    }
+
+    //create threads for taxis
+    for (int i = 0; i < num_taxis; i++)
+    {
+        pthread_t taxi;
+        while (pthread_create(&taxi, NULL, FnTaxi, NULL));
+        taxis[i] = taxi;
+        taxi_ids[i] = &i;
+    }
+
+    // for (int i = 0; i < num_airplanes; i++)
+    // {
+    //     pthread_join(thread_array[i], NULL);
+    // }
+    // pthread_join(taxi, NULL);
+    // sem_destroy(&mutex);
+
+    // pthread_exit(NULL);
+    pthread_exit(EXIT_SUCCESS);
 }

@@ -15,10 +15,10 @@
                 "-Wno-unused",
                 "-g",
                 "-ggdb",
-                "hw2/air_taxi_sim_skeleton.c",
+                "hw2/air_taxi_sim.c",
                 "-o",
-                "hw2/air_taxi_sim_skeleton",
-                "-lpthread",
+                "hw2/air_taxi_sim",
+                "-pthread",
                 "-lrt"
             ],
             "presentation": {
