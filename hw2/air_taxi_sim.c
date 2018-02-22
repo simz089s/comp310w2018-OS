@@ -164,8 +164,10 @@ void* FnTaxi(void* pr_id)
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
-        double roundtrip = rand() % 2 == 0 ? 0.16666666666666666 : 0.5;
-        sleep(roundtrip);
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = rand() % 2 == 0 ? 166666667 : 500000000;
+        nanosleep(&ts, NULL);
     }
     return 0;
 }
@@ -225,5 +227,4 @@ int main(int argc, char* argv[])
     sem_destroy(&empty);
 
     pthread_exit(NULL);
-    // return EXIT_SUCCESS;
 }
