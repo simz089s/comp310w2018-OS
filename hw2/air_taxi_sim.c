@@ -22,10 +22,14 @@
 #include <limits.h>
 #include <semaphore.h>
 
+#include <stdbool.h>
 
 int BUFFER_SIZE = 100; //size of queue
 
-
+// Semaphores
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t full;
+sem_t empty;
 
 // A structure to represent a queue
 struct Queue
@@ -113,14 +117,50 @@ void print(struct Queue* queue){
 
 struct Queue* queue;
 
-/*Producer Function: Simulates an Airplane arriving and dumping 5-10 passengers to the taxi platform */
+/* Producer Function: Simulates an Airplane arriving and dumping 5-10 passengers
+ * to the taxi platform */
 void* FnAirplane(void* cl_id)
 {
+    int plane_id = *(int*)cl_id;
+    srand(time(NULL));
+    int nump = rand() % 6 + 5;
+    printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
+    for (int pnum = 0; pnum < nump; pnum++)
+    {
+        int passenger = 1000000 + (plane_id * 1000) + pnum;
+        printf("Passenger %d of airplane %d arrives to platform\n", passenger, plane_id);
+        sem_wait(&empty);
+        pthread_mutex_lock(&mutex);
+        if (isFull(queue))
+        {
+            printf("Platform is full: Rest of passengers of plane %d take the bus", plane_id);
+            break;
+        }
+        enqueue(queue, passenger);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);
+    }
+    return 0;
 }
 
-/* Consumer Function: simulates a taxi that takes n time to take a passenger home and come back to the airport */
+/* Consumer Function: simulates a taxi that takes n time to take a passenger 
+ * home and come back to the airport */
 void* FnTaxi(void* pr_id)
 {
+    int taxi_id = *(int*)pr_id;
+    while (true)
+    {
+        printf("Taxi driver %d arrives\n", taxi_id);
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
+        int client = dequeue(queue);
+        printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
+        double roundtrip = rand() % 2 == 0 ? 0.16666666666666666 : 0.5;
+        sleep(roundtrip);
+    }
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -142,42 +182,41 @@ int main(int argc, char* argv[])
     //declare arrays of threads and initialize semaphore(s)
     pthread_t airplanes[num_airplanes];
     pthread_t taxis[num_taxis];
-    sem_t mutex;
-    sem_t full;
-    sem_t empty;
-    sem_init(&mutex, 0, 1        );
-    sem_init(&full , 0, 0        );
-    sem_init(&empty, 0, num_taxis);
+    // pthread_mutex_init(&mutex, NULL);
+    sem_init(&full, 0, 0);
+    sem_init(&empty, 0, BUFFER_SIZE);
 
     //create arrays of integer pointers to ids for taxi / airplane threads
     int* taxi_ids[num_taxis];
     int* airplane_ids[num_airplanes];
+    int nums[num_taxis > num_airplanes ? num_taxis : num_airplanes];
+    for (int i = 0; i < sizeof(nums); i++) { nums[i] = i; }
 
     //create threads for airplanes
     for (int i = 0; i < num_airplanes; i++)
     {
         pthread_t airplane;
-        while (pthread_create(&airplane, NULL, FnAirplane, NULL));
+        airplane_ids[i] = &nums[i];
+        printf("Creating airplane thread %d\n", i);
+        while (pthread_create(&airplane, NULL, FnAirplane, (void*)airplane_ids[i]));
         airplanes[i] = airplane;
-        airplane_ids[i] = &i;
     }
 
     //create threads for taxis
-    for (int i = 0; i < num_taxis; i++)
+    for (int j = 0; j < num_taxis; j++)
     {
         pthread_t taxi;
-        while (pthread_create(&taxi, NULL, FnTaxi, NULL));
-        taxis[i] = taxi;
-        taxi_ids[i] = &i;
+        taxi_ids[j] = &nums[j];
+        while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[j]));
+        taxis[j] = taxi;
     }
 
-    // for (int i = 0; i < num_airplanes; i++)
-    // {
-    //     pthread_join(thread_array[i], NULL);
-    // }
-    // pthread_join(taxi, NULL);
-    // sem_destroy(&mutex);
+    for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
+    for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
+    pthread_mutex_destroy(&mutex);
+    sem_destroy(&full);
+    sem_destroy(&empty);
 
-    // pthread_exit(NULL);
-    pthread_exit(EXIT_SUCCESS);
+    pthread_exit(NULL);
+    // return EXIT_SUCCESS;
 }

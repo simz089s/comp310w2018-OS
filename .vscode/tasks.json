@@ -13,6 +13,7 @@
                 "-Wextra",
                 "-std=gnu99",
                 "-Wno-unused",
+                "-Wno-sign-compare",
                 "-g",
                 "-ggdb",
                 "hw2/air_taxi_sim.c",
