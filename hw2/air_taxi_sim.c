@@ -164,6 +164,7 @@ void* FnTaxi(void* pr_id)
     // struct timeval t;
     // gettimeofday(&t, NULL);
     // srand(t.tv_usec * t.tv_sec);
+    // pthread_cleanup_push(free, NULL);
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
@@ -184,6 +185,7 @@ void* FnTaxi(void* pr_id)
         ts.tv_nsec = rand() % 2 == 0 ? 166666667 : 500000000;
         nanosleep(&ts, NULL);
     }
+    // pthread_cleanup_pop(true);
     return 0;
 }
 
@@ -224,22 +226,23 @@ int main(int argc, char* argv[])
     for (int i = 0; i < num_airplanes; i++)
     {
         pthread_t airplane;
+        airplanes[i] = airplane;
         airplane_ids[i] = &nums[i];
         printf("Creating airplane thread %d\n", i);
         while (pthread_create(&airplane, NULL, FnAirplane, (void*)airplane_ids[i]));
-        airplanes[i] = airplane;
     }
 
     //create threads for taxis
-    for (int j = 0; j < num_taxis; j++)
+    for (int i = 0; i < num_taxis; i++)
     {
         pthread_t taxi;
-        taxi_ids[j] = &nums[j];
-        while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[j]));
-        taxis[j] = taxi;
+        taxis[i] = taxi;
+        taxi_ids[i] = &nums[i];
+        while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[i]));
     }
 
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
+    // while (!isEmpty(queue));
     for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
