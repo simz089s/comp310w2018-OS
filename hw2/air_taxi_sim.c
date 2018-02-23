@@ -226,19 +226,19 @@ int main(int argc, char* argv[])
     for (int i = 0; i < num_airplanes; i++)
     {
         pthread_t airplane;
-        airplanes[i] = airplane;
         airplane_ids[i] = &nums[i];
         printf("Creating airplane thread %d\n", i);
         while (pthread_create(&airplane, NULL, FnAirplane, (void*)airplane_ids[i]));
+        airplanes[i] = airplane;
     }
 
     //create threads for taxis
     for (int i = 0; i < num_taxis; i++)
     {
         pthread_t taxi;
-        taxis[i] = taxi;
         taxi_ids[i] = &nums[i];
         while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[i]));
+        taxis[i] = taxi;
     }
 
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
