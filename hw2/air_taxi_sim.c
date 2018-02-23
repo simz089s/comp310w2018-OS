@@ -134,6 +134,8 @@ void* FnAirplane(void* cl_id)
         if (isFull(queue))
         {
             printf("Platform is full: Rest of passengers of plane %d take the bus", plane_id);
+            pthread_mutex_unlock(&mutex);
+            sem_post(&empty);
             break;
         }
         enqueue(queue, passenger);
@@ -148,6 +150,7 @@ void* FnAirplane(void* cl_id)
 void* FnTaxi(void* pr_id)
 {
     int taxi_id = *(int*)pr_id;
+    // pthread_cleanup_push(pthread_exit, NULL);
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
@@ -157,18 +160,20 @@ void* FnTaxi(void* pr_id)
         {
             printf("Taxi drive %d waits for passengers to enter the platform", taxi_id);
             pthread_mutex_unlock(&mutex);
-            sem_post(&empty);
+            sem_post(&full);
             continue;
         }
         int client = dequeue(queue);
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
+        srand(time(NULL));
         struct timespec ts;
         ts.tv_sec = 0;
         ts.tv_nsec = rand() % 2 == 0 ? 166666667 : 500000000;
         nanosleep(&ts, NULL);
     }
+    // pthread_cleanup_pop(true);
     return 0;
 }
 
@@ -205,23 +210,24 @@ int main(int argc, char* argv[])
     for (int i = 0; i < num_airplanes; i++)
     {
         pthread_t airplane;
+        airplanes[i] = airplane;
         airplane_ids[i] = &nums[i];
         printf("Creating airplane thread %d\n", i);
         while (pthread_create(&airplane, NULL, FnAirplane, (void*)airplane_ids[i]));
-        airplanes[i] = airplane;
     }
 
     //create threads for taxis
-    for (int j = 0; j < num_taxis; j++)
+    for (int i = 0; i < num_taxis; i++)
     {
         pthread_t taxi;
-        taxi_ids[j] = &nums[j];
-        while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[j]));
-        taxis[j] = taxi;
+        taxis[i] = taxi;
+        taxi_ids[i] = &nums[i];
+        while (pthread_create(&taxi, NULL, FnTaxi, (void*)taxi_ids[i]));
     }
 
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
-    for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
+    while (!isEmpty(queue));
+    for (int i = 0; i < num_taxis; i++) { pthread_cancel(taxis[i]); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
     sem_destroy(&empty);
