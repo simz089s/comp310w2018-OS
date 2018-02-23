@@ -23,6 +23,7 @@
 #include <semaphore.h>
 
 #include <stdbool.h>
+#include <sys/time.h>
 
 int BUFFER_SIZE = 100; //size of queue
 
@@ -122,7 +123,12 @@ struct Queue* queue;
 void* FnAirplane(void* cl_id)
 {
     int plane_id = *(int*)cl_id;
-    srand(time(NULL));
+    struct timespec ts;
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    srand(t.tv_usec * t.tv_sec);
+    // while (true)
+    // {
     int nump = rand() % 6 + 5;
     printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
     for (int pnum = 0; pnum < nump; pnum++)
@@ -133,13 +139,14 @@ void* FnAirplane(void* cl_id)
         pthread_mutex_lock(&mutex);
         if (isFull(queue))
         {
-            printf("Platform is full: Rest of passengers of plane %d take the bus", plane_id);
+            printf("Platform is full: Rest of passengers of plane %d take the bus\n", plane_id);
             break;
         }
         enqueue(queue, passenger);
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
     }
+    // }
     return 0;
 }
 
@@ -148,23 +155,26 @@ void* FnAirplane(void* cl_id)
 void* FnTaxi(void* pr_id)
 {
     int taxi_id = *(int*)pr_id;
+    struct timespec ts;
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    srand(t.tv_usec * t.tv_sec);
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
-        sem_wait(&full);
-        pthread_mutex_lock(&mutex);
         if (isEmpty(queue))
         {
-            printf("Taxi drive %d waits for passengers to enter the platform", taxi_id);
-            pthread_mutex_unlock(&mutex);
-            sem_post(&empty);
-            continue;
+            printf("Taxi drive %d waits for passengers to enter the platform\n", taxi_id);
+            // pthread_mutex_unlock(&mutex);
+            // sem_post(&empty);
+            // continue;
         }
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
         int client = dequeue(queue);
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
-        struct timespec ts;
         ts.tv_sec = 0;
         ts.tv_nsec = rand() % 2 == 0 ? 166666667 : 500000000;
         nanosleep(&ts, NULL);
