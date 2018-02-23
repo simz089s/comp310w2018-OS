@@ -124,30 +124,34 @@ struct Queue* queue;
 void* FnAirplane(void* cl_id)
 {
     int plane_id = *(int*)cl_id;
-    struct timespec ts;
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    srand(t.tv_usec * t.tv_sec);
-    // while (true)
-    // {
-    int nump = rand() % 6 + 5;
-    printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
-    for (int pnum = 0; pnum < nump; pnum++)
+    // struct timespec ts;
+    // struct timeval t;
+    // gettimeofday(&t, NULL);
+    // srand(t.tv_usec * t.tv_sec);
+    while (true)
     {
-        int passenger = 1000000 + (plane_id * 1000) + pnum;
-        printf("Passenger %d of airplane %d arrives to platform\n", passenger, plane_id);
+        int nump = rand() % 6 + 5;
+        printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
         sem_wait(&empty);
         pthread_mutex_lock(&mutex);
-        if (isFull(queue))
+        for (int pnum = 0; pnum < nump; pnum++)
         {
-            printf("Platform is full: Rest of passengers of plane %d take the bus\n", plane_id);
-            break;
+            int passenger = 1000000 + (plane_id * 1000) + pnum;
+            printf("Passenger %d of airplane %d arrives to platform\n", passenger, plane_id);
+            if (isFull(queue))
+            {
+                printf("Platform is full: Rest of passengers of plane %d take the bus\n", plane_id);
+                break;
+            }
+            enqueue(queue, passenger);
         }
-        enqueue(queue, passenger);
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
+        sleep(1);
+        // ts.tv_sec = 1;
+        // ts.tv_nsec = 0;
+        // nanosleep(&ts, NULL);
     }
-    // }
     return 0;
 }
 
@@ -157,9 +161,9 @@ void* FnTaxi(void* pr_id)
 {
     int taxi_id = *(int*)pr_id;
     struct timespec ts;
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    srand(t.tv_usec * t.tv_sec);
+    // struct timeval t;
+    // gettimeofday(&t, NULL);
+    // srand(t.tv_usec * t.tv_sec);
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
@@ -211,6 +215,10 @@ int main(int argc, char* argv[])
     int* airplane_ids[num_airplanes];
     int nums[num_taxis > num_airplanes ? num_taxis : num_airplanes];
     for (int i = 0; i < sizeof(nums); i++) { nums[i] = i; }
+
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    srand(t.tv_usec * t.tv_sec);
 
     //create threads for airplanes
     for (int i = 0; i < num_airplanes; i++)
