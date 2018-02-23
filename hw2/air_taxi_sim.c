@@ -150,7 +150,7 @@ void* FnAirplane(void* cl_id)
 void* FnTaxi(void* pr_id)
 {
     int taxi_id = *(int*)pr_id;
-    // pthread_cleanup_push(pthread_exit, NULL);
+    // pthread_cleanup_push(free, NULL);
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
@@ -161,7 +161,9 @@ void* FnTaxi(void* pr_id)
             printf("Taxi drive %d waits for passengers to enter the platform", taxi_id);
             pthread_mutex_unlock(&mutex);
             sem_post(&full);
-            continue;
+            // continue;
+            while (isEmpty(queue));
+            pthread_mutex_lock(&mutex);
         }
         int client = dequeue(queue);
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
@@ -226,8 +228,8 @@ int main(int argc, char* argv[])
     }
 
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
-    while (!isEmpty(queue));
-    for (int i = 0; i < num_taxis; i++) { pthread_cancel(taxis[i]); }
+    // while (!isEmpty(queue));
+    for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
     sem_destroy(&empty);
