@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "gcc GNU99 hw2",
+            "label": "gcc GNU99 air_taxi_sim",
             "type": "shell",
             "command": "gcc",
             "args": [
@@ -37,20 +37,23 @@
             }
         },
         {
-            "label": "Compile and build (clang GNU11 + debug GDB)",
+            "label": "clang GNU11 air_taxi_sim",
             "type": "shell",
             "command": "clang",
             "args": [
-                "-Wpedantic",
                 "-Wall",
+                "-Wpedantic",
                 "-Wextra",
-                "-std=gnu11",
+                "-std=gnu99",
                 "-Wno-unused",
+                "-Wno-sign-compare",
                 "-g",
                 "-ggdb",
-                "*.c",
+                "hw2/air_taxi_sim.c",
                 "-o",
-                ""
+                "hw2/air_taxi_sim",
+                "-pthread",
+                "-lrt"
             ],
             "presentation": {
                 "echo": true,
