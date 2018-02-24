@@ -127,7 +127,8 @@ void* FnAirplane(void* cl_id)
 {
     int plane_id = *(int*)cl_id;
     // struct timespec ts;
-    while (true)
+    // while (true)
+    for (int i = 0; i < 5; i++)
     {
         int nump = rand() % 6 + 5; // 5 to 10 passengers
         printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
@@ -238,7 +239,7 @@ int main(int argc, char* argv[])
 
     // Wait for threads to finish and join before destroying semaphores
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
-    for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
+    for (int i = 0; i < num_taxis; i++) { pthread_cancel(taxis[i]); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
     // sem_destroy(&empty); Airplane passengers would take the bus
