@@ -25,6 +25,8 @@
 #include <stdbool.h>
 #include <time.h>
 #include <sys/time.h>
+// #define INT_MIN (1 << (sizeof(int)*CHAR_BIT-1))
+// #define INT_MAX (-(INT_MIN+1))
 
 int BUFFER_SIZE = 100; //size of queue
 
