@@ -182,7 +182,7 @@ void* FnTaxi(void* pr_id)
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
         ts.tv_sec = 0;
-        ts.tv_nsec = rand() % 2 == 0 ? 166666667 : 500000000;
+        ts.tv_nsec = rand() % 333333334 + 166666667;
         nanosleep(&ts, NULL);
     }
     // pthread_cleanup_pop(true);
