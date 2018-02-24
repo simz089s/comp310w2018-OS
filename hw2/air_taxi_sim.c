@@ -127,7 +127,7 @@ void* FnAirplane(void* cl_id)
 {
     int plane_id = *(int*)cl_id;
     // struct timespec ts;
-    // while (true)
+    // while (true) // Run program for 5 hours (seconds) only
     for (int i = 0; i < 5; i++)
     {
         int nump = rand() % 6 + 5; // 5 to 10 passengers
