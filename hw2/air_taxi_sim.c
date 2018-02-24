@@ -23,15 +23,15 @@
 #include <semaphore.h>
 
 #include <stdbool.h>
+#include <time.h>
 #include <sys/time.h>
 
 int BUFFER_SIZE = 100; //size of queue
 
 // Semaphores
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 sem_t full;
-sem_t empty;
+// sem_t empty; Airplane passengers would take the bus
 
 // A structure to represent a queue
 struct Queue
@@ -125,28 +125,26 @@ void* FnAirplane(void* cl_id)
 {
     int plane_id = *(int*)cl_id;
     // struct timespec ts;
-    // struct timeval t;
-    // gettimeofday(&t, NULL);
-    // srand(t.tv_usec * t.tv_sec);
     while (true)
     {
-        int nump = rand() % 6 + 5;
+        int nump = rand() % 6 + 5; // 5 to 10 passengers
         printf("Airplane %d arrives with %d passengers\n", plane_id, nump);
-        sem_wait(&empty);
-        pthread_mutex_lock(&mutex);
         for (int pnum = 0; pnum < nump; pnum++)
         {
-            int passenger = 1000000 + (plane_id * 1000) + pnum;
+            int passenger = 1000000 + (plane_id * 1000) + pnum; // Passenger ID
             printf("Passenger %d of airplane %d arrives to platform\n", passenger, plane_id);
+            // sem_wait(&empty); Airplane passengers would take the bus
+            pthread_mutex_lock(&mutex);
             if (isFull(queue))
             {
                 printf("Platform is full: Rest of passengers of plane %d take the bus\n", plane_id);
-                break;
+                pthread_mutex_unlock(&mutex);
+                break; // Since *rest* of passengers take the bus
             }
             enqueue(queue, passenger);
+            pthread_mutex_unlock(&mutex);
+            sem_post(&full);
         }
-        pthread_mutex_unlock(&mutex);
-        sem_post(&full);
         sleep(1);
         // ts.tv_sec = 1;
         // ts.tv_nsec = 0;
@@ -161,31 +159,24 @@ void* FnTaxi(void* pr_id)
 {
     int taxi_id = *(int*)pr_id;
     struct timespec ts;
-    // struct timeval t;
-    // gettimeofday(&t, NULL);
-    // srand(t.tv_usec * t.tv_sec);
-    // pthread_cleanup_push(free, NULL);
+    ts.tv_sec = 0;
     while (true)
     {
         printf("Taxi driver %d arrives\n", taxi_id);
-        if (isEmpty(queue))
+        if (sem_trywait(&full) == -1)
         {
             printf("Taxi drive %d waits for passengers to enter the platform\n", taxi_id);
-            // pthread_mutex_unlock(&mutex);
-            // sem_post(&empty);
-            // continue;
         }
         sem_wait(&full);
         pthread_mutex_lock(&mutex);
         int client = dequeue(queue);
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
         pthread_mutex_unlock(&mutex);
-        sem_post(&empty);
-        ts.tv_sec = 0;
-        ts.tv_nsec = rand() % 333333334 + 166666667;
-        nanosleep(&ts, NULL);
+        // sem_post(&empty); Airplane passengers would take the bus
+        // sleep() only supports integers
+        ts.tv_nsec = rand() % 333333334 + 166666667; // 0.16... to 0.5 secs
+        nanosleep(&ts, NULL); // Simulating 10 to 30 minutes
     }
-    // pthread_cleanup_pop(true);
     return 0;
 }
 
@@ -208,16 +199,18 @@ int main(int argc, char* argv[])
     //declare arrays of threads and initialize semaphore(s)
     pthread_t airplanes[num_airplanes];
     pthread_t taxis[num_taxis];
-    // pthread_mutex_init(&mutex, NULL);
+    // pthread_mutex_init(&mutex, NULL); Already using PTHREAD_MUTEX_INITIALIZER
     sem_init(&full, 0, 0);
-    sem_init(&empty, 0, BUFFER_SIZE);
+    // sem_init(&empty, 0, BUFFER_SIZE); Airplane passengers would take the bus
 
     //create arrays of integer pointers to ids for taxi / airplane threads
     int* taxi_ids[num_taxis];
     int* airplane_ids[num_airplanes];
+    // Since we are using int* arrays and passing the pointers, not the values
     int nums[num_taxis > num_airplanes ? num_taxis : num_airplanes];
     for (int i = 0; i < sizeof(nums); i++) { nums[i] = i; }
 
+    // Seeding with time(NULL) is too imprecise for calling rand() every milliseconds
     struct timeval t;
     gettimeofday(&t, NULL);
     srand(t.tv_usec * t.tv_sec);
@@ -241,12 +234,12 @@ int main(int argc, char* argv[])
         taxis[i] = taxi;
     }
 
+    // Wait for threads to finish and join before destroying semaphores
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
-    // while (!isEmpty(queue));
     for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
-    sem_destroy(&empty);
+    // sem_destroy(&empty); Airplane passengers would take the bus
 
     pthread_exit(NULL);
 }
