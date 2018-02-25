@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
     // Wait for threads to finish and join before destroying semaphores
     for (int i = 0; i < num_airplanes; i++) { pthread_join(airplanes[i], NULL); }
     for (int i = 0; i < num_taxis; i++) { pthread_cancel(taxis[i]); }
-    for (int i = 0; i < num_airplanes; i++) { pthread_join(taxis[i], NULL); }
+    for (int i = 0; i < num_taxis; i++) { pthread_join(taxis[i], NULL); }
     pthread_mutex_destroy(&mutex);
     sem_destroy(&full);
     // sem_destroy(&empty); Airplane passengers would take the bus
