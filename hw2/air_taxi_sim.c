@@ -168,9 +168,10 @@ void* FnTaxi(void* pr_id)
         printf("Taxi driver %d arrives\n", taxi_id);
         if (sem_trywait(&full) == -1)
         {
+            // Queue is empty and full was *not* downed
             printf("Taxi drive %d waits for passengers to enter the platform\n", taxi_id);
+            sem_wait(&full);
         }
-        sem_wait(&full);
         pthread_mutex_lock(&mutex);
         int client = dequeue(queue);
         printf("Taxi driver %d picked up client %d from the platform\n", taxi_id, client);
