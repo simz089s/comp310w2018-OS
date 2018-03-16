@@ -4,23 +4,20 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "gcc GNU99 air_taxi_sim",
+            "label": "clang gnu99 part2",
             "type": "shell",
-            "command": "gcc",
+            "command": "clang",
             "args": [
                 "-Wall",
                 "-Wpedantic",
                 "-Wextra",
                 "-std=gnu99",
                 "-Wno-unused",
-                "-Wno-sign-compare",
                 "-g",
                 "-ggdb",
-                "hw2/air_taxi_sim.c",
+                "hw3/part2.c",
                 "-o",
-                "hw2/air_taxi_sim",
-                "-pthread",
-                "-lrt"
+                "hw3/part2",
             ],
             "presentation": {
                 "echo": true,
@@ -37,23 +34,20 @@
             }
         },
         {
-            "label": "clang GNU11 air_taxi_sim",
+            "label": "gcc gnu99 bankers",
             "type": "shell",
-            "command": "clang",
+            "command": "gcc",
             "args": [
                 "-Wall",
                 "-Wpedantic",
                 "-Wextra",
                 "-std=gnu99",
                 "-Wno-unused",
-                "-Wno-sign-compare",
                 "-g",
                 "-ggdb",
-                "hw2/air_taxi_sim.c",
+                "hw3/bankers.c",
                 "-o",
-                "hw2/air_taxi_sim",
-                "-pthread",
-                "-lrt"
+                "hw3/bankers",
             ],
             "presentation": {
                 "echo": true,
@@ -63,15 +57,11 @@
             },
             "problemMatcher": [
                 "$gcc"
-            ]
-        },
-        {
-            "label": "Make",
-            "type": "shell",
-            "command": "make",
-            "problemMatcher": [
-                "$gcc"
-            ]
+            ],
+            "group": "build"/*{
+                "kind": "build",
+                "isDefault": true
+            }*/
         }
     ]
 }
