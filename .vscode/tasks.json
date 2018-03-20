@@ -13,6 +13,7 @@
                 "-Wextra",
                 "-std=gnu99",
                 "-Wno-unused",
+                "-Wno-unused-parameter",
                 "-g",
                 "-ggdb",
                 "hw3/part2.c",

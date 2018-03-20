@@ -1,5 +1,6 @@
 #include <stdio.h>  //for printf and scanf
 #include <stdlib.h> //for malloc
+#include <limits.h>
 
 #define LOW 0
 #define HIGH 199
@@ -20,9 +21,12 @@ void swap(int* a, int* b)
 {
     if (*a != *b)
     {
-        *a = (*a ^ *b);
-        *b = (*a ^ *b);
-        *a = (*a ^ *b);
+        // *a = (*a ^ *b);
+        // *b = (*a ^ *b);
+        // *a = (*a ^ *b);
+        int tmp = *a;
+        *a = *b;
+        *b = tmp;
         return;
     }
 }
@@ -59,6 +63,27 @@ void accessFCFS(int* request, int numRequest)
 void accessSSTF(int* request, int numRequest)
 {
     //write your logic here
+    int nearest = 0;
+    int nearestDist = abs(request[0] - START);
+    for (int i = 0; i < numRequest; i++)
+    {
+        int distance = abs(request[i] - START);
+        nearest = distance < nearestDist ? i : nearest;
+        nearestDist = request[nearest];
+    }
+    swap(&request[0], &request[nearest]);
+    for (int i = 0; i < numRequest; i++)
+    {
+        for (int j = i+1; j < numRequest; j++)
+        {
+            int distance = abs(request[i] - request[j]);
+            nearest = distance < nearestDist ? j : nearest;
+            nearestDist = request[nearest];
+        }
+        swap(&request[i], &request[nearest]);
+        nearest = -1;
+        nearestDist = INT_MAX;
+    }
     puts("\n----------------");
     printf("SSTF :");
     printSeqNPerformance(request, numRequest);
@@ -153,15 +178,15 @@ int main()
         break;
 
     //access the disk location in CSCAN
-    case 4: accessCSCAN(request,numRequest);
+    case 4: accessCSCAN(request, numRequest);
         break;
 
     //access the disk location in LOOK
-    case 5: accessLOOK(request,numRequest);
+    case 5: accessLOOK(request, numRequest);
         break;
 
     //access the disk location in CLOOK
-    case 6: accessCLOOK(request,numRequest);
+    case 6: accessCLOOK(request, numRequest);
         break;
 
     default:
