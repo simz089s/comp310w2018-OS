@@ -9,6 +9,8 @@
 #include <stdlib.h> //for malloc
 #include <limits.h>
 
+#include <stdbool.h>
+
 #ifndef __INT_MAX__
 #define __INT_MAX__ (-((1 << (sizeof(int)*CHAR_BIT-1))+1))
 #endif
@@ -73,6 +75,24 @@ void accessFCFS(int* request, int numRequest)
 // Interval length between two integers function
 int dist(int a, int b) { return abs(a - b); }
 
+// Shell sort (better insertion sort for longer arrays)
+void shellsort(int a[], int l, int r, bool descending)
+{
+    if (l >= r-1 || l < 0 || r < 0) { return; }
+    int n = r - l;
+    for (int h = n < 701 ? 701 : n; h > 0; h/=2.3)
+    {
+        for (int i = h; i < n; i++)
+        {
+            int current = a[i];
+            for (int j = i; j >= h && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
+            {
+                swap(&a[j], &a[j-h]);
+            }
+        }
+    }
+}
+
 //access the disk location in SSTF
 void accessSSTF(int* request, int numRequest)
 {
@@ -85,7 +105,7 @@ void accessSSTF(int* request, int numRequest)
      *
      * Here I just used a naive bruteforce algorithm that finds the closest
      * element right of the current one going from left to right (smaller to
-     * bigger) index in the array
+     * bigger) index in the array for every element consecutively
      */
     int nearestDist = abs(request[0] - START);
     for (int i = 1; i < numRequest; i++)
@@ -122,9 +142,72 @@ void accessSCAN(int* request, int numRequest)
 {
     
 	//write your logic here
+    int min = INT_MAX;
+    int max = INT_MIN;
+    for (int i = 0; i < numRequest; i++)
+    {
+        min = request[i] < min ? request[i] : min;
+        max = request[i] > max ? request[i] : max;
+    }
+    shellsort(request, 0, numRequest, false);
+    int newCnt = numRequest;
+    int l = 0;
+    int r = numRequest;
+    bool addLOW = false;
+    bool addHIGH = false;
+    if (request[0] != LOW)
+    {
+        newCnt++;
+        l++;
+        r++;
+        addLOW = true;
+    }
+    if (request[numRequest] != HIGH)
+    {
+        newCnt++;
+        addHIGH = true;
+    }
+    int newRequest[newCnt];
+    int idx = 0;
+    while (request[idx] < START) { idx++; }
+    // bool ascending = HIGH-idx <= idx-LOW ? true : false;
+    bool ascending = max-START <= START-min ? true : false;
+    if (ascending)
+    {
+        for (int i = idx; i < numRequest; i++)
+            { swap(&request[i], &request[i-idx]); }
+        shellsort(request, idx, numRequest, true);
+        int idx2 = numRequest - idx;
+        int i = 0;
+        for (; i < idx2; i++)
+        {
+            newRequest[i] = request[i];
+        }
+        if (addHIGH) { newRequest[i] = HIGH; }
+        for (i = addHIGH?idx2+1:idx2; i < r; i++)
+        {
+            newRequest[i] = request[i-l];
+        }
+        if (addLOW) { request[i] = LOW; }
+    }
+    else
+    {
+        shellsort(request, 0, idx, true);
+        int i = 0;
+        for (; i < idx; i++)
+        {
+            newRequest[i] = request[i];
+        }
+        if (addLOW) { newRequest[i] = LOW; }
+        for (i = addLOW?idx+1:idx; i < r; i++)
+        {
+            newRequest[i] = request[i-l];
+        }
+        if (addHIGH) { newRequest[i] = HIGH; }
+    }
     puts("\n----------------");
     printf("SCAN :");
-    // printSeqNPerformance(newRequest, newCnt);
+    printSeqNPerformance(newRequest, newCnt);
     puts("----------------");
     return;
 }
@@ -133,6 +216,10 @@ void accessSCAN(int* request, int numRequest)
 void accessCSCAN(int* request, int numRequest)
 {
     //write your logic here
+    // shellsort(request, 0, numRequest, false);
+    // shellsort(request, 0, numRequest, true);
+    // int* newRequest = request;
+    // int newCnt = numRequest;
     puts("\n----------------");
     printf("CSCAN :");
     // printSeqNPerformance(newRequest, newCnt);
@@ -144,6 +231,9 @@ void accessCSCAN(int* request, int numRequest)
 void accessLOOK(int* request, int numRequest)
 {
     //write your logic here
+    // int idx = 0;
+    // while (request[idx] < START) { idx++; }
+    // bool goRight = request[numRequest]-idx < idx-request[0] ? true : false;
     puts("\n----------------");
     printf("LOOK :");
     // printSeqNPerformance(newRequest, newCnt);
@@ -178,8 +268,14 @@ int main()
         // scanf("%d", &request[i]);
     }
 
-    // TEST (should be 53->54->55->52->59->10->9->8->7->6->1)
+    /**
+     * TEST
+     * SSTF : 53->54->55->52->59->10->9->8->7->6->1
+     * SCAN : 53->54->55->59->HIGH->52->10->9->8->7->6->1->LOW
+     */
     int request[] = {59,54,55,52,1,10,6,7,9,8};
+    // int request[] = {51,52,54,55,56,57,58};
+    // int request[] = {48,49,50,51,52,54,55};
     numRequest = sizeof(request)/sizeof(typeof(request[0]));
 
     puts("\nSelect the policy : ");
