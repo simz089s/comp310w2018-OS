@@ -76,16 +76,17 @@ void accessFCFS(int* request, int numRequest)
 int dist(int a, int b) { return abs(a - b); }
 
 // Shell sort (better insertion sort for longer arrays)
+// Supports subarrays and descending order flag
 void shellsort(int a[], int l, int r, bool descending)
 {
     if (l >= r-1 || l < 0 || r < 0) { return; }
     int n = r - l;
     for (int h = n < 701 ? 701 : n; h > 0; h/=2.3)
     {
-        for (int i = h; i < n; i++)
+        for (int i = h+l; i < r; i++)
         {
             int current = a[i];
-            for (int j = i; j >= h && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
+            for (int j = i; j >= h+l && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
             {
                 swap(&a[j], &a[j-h]);
             }
@@ -153,21 +154,9 @@ void accessSCAN(int* request, int numRequest)
     int newCnt = numRequest;
     int l = 0;
     int r = numRequest;
-    bool addLOW = false;
-    bool addHIGH = false;
-    if (request[0] != LOW)
-    {
-        newCnt++;
-        l++;
-        r++;
-        addLOW = true;
-    }
-    if (request[numRequest] != HIGH)
-    {
-        newCnt++;
-        addHIGH = true;
-    }
-    int newRequest[newCnt];
+    bool addLOW = (request[0] != LOW);
+    bool addHIGH = (request[numRequest-1] != HIGH);
+    int* newRequest = malloc(sizeof(int)*(newCnt + addLOW + addHIGH));
     int idx = 0;
     while (request[idx] < START) { idx++; }
     // bool ascending = HIGH-idx <= idx-LOW ? true : false;
@@ -176,38 +165,63 @@ void accessSCAN(int* request, int numRequest)
     {
         for (int i = idx; i < numRequest; i++)
             { swap(&request[i], &request[i-idx]); }
-        shellsort(request, idx, numRequest, true);
         int idx2 = numRequest - idx;
+        shellsort(request, idx2, numRequest, true);
         int i = 0;
         for (; i < idx2; i++)
         {
             newRequest[i] = request[i];
         }
-        if (addHIGH) { newRequest[i] = HIGH; }
+        if (addHIGH)
+        {
+            newRequest[i] = HIGH;
+            l++;
+            r++;
+            newCnt++;
+        }
         for (i = addHIGH?idx2+1:idx2; i < r; i++)
         {
-            newRequest[i] = request[i-l];
+            if (addHIGH) { newRequest[i] = request[i-l]; }
+            else { newRequest[i] = request[i-l]; }
         }
-        if (addLOW) { request[i] = LOW; }
+        if (addLOW)
+        {
+            request[i] = LOW;
+            newCnt++;
+        }
     }
     else
     {
+        if (addLOW)
+        {
+        }
         shellsort(request, 0, idx, true);
         int i = 0;
         for (; i < idx; i++)
         {
             newRequest[i] = request[i];
         }
-        if (addLOW) { newRequest[i] = LOW; }
+        if (addLOW)
+        {
+            newRequest[i] = LOW;
+            l++;
+            r++;
+            newCnt++;
+        }
         for (i = addLOW?idx+1:idx; i < r; i++)
         {
             newRequest[i] = request[i-l];
         }
-        if (addHIGH) { newRequest[i] = HIGH; }
+        if (addHIGH)
+        {
+            newRequest[i] = HIGH;
+            newCnt++;
+        }
     }
     puts("\n----------------");
     printf("SCAN :");
     printSeqNPerformance(newRequest, newCnt);
+    free(newRequest);
     puts("----------------");
     return;
 }
@@ -274,8 +288,8 @@ int main()
      * SCAN : 53->54->55->59->HIGH->52->10->9->8->7->6->1->LOW
      */
     int request[] = {59,54,55,52,1,10,6,7,9,8};
-    // int request[] = {51,52,54,55,56,57,58};
-    // int request[] = {48,49,50,51,52,54,55};
+    // int request[] = {51,52,54,55,56,57,58}; // descending
+    // int request[] = {48,49,50,51,52,54,55}; // ascending
     numRequest = sizeof(request)/sizeof(typeof(request[0]));
 
     puts("\nSelect the policy : ");
