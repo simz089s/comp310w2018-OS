@@ -28,6 +28,10 @@ int cmpfunc (const void* a, const void* b)
 {
    return *(int*)a - *(int*)b;
 }
+int cmpfuncrev (const void* a, const void* b)
+{
+   return *(int*)b - *(int*)a;
+}
 
 //function to swap 2 integers
 void swap(int* a, int* b)
@@ -37,10 +41,36 @@ void swap(int* a, int* b)
         // *a = (*a ^ *b);
         // *b = (*a ^ *b);
         // *a = (*a ^ *b);
+        // (Marginally) faster and works if a==b :
         int tmp = *a;
         *a = *b;
         *b = tmp;
         return;
+    }
+}
+
+// UNUSED
+// Interval length between two integers function
+int dist(int a, int b) { return abs(a - b); }
+
+// UNUSED
+// Shell sort (better insertion sort for longer arrays)
+// Supports subarrays
+void shellsort(int a[], int l, int r, __compar_fn_t cmp)//, bool descending)
+{
+    int n = r - l;
+    if (n < 2) { return; }
+    for (int h = n < 701 ? 701 : n; h > 0; h/=2.3)
+    {
+        for (int i = h+l; i < r; i++)
+        {
+            int current = a[i];
+            // for (int j = i; j >= h+l && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
+            for (int j = i; j >= h+l && cmp((void*)&current, (void*)&a[j-h]) < 0; j-=h)
+            {
+                swap(&a[j], &a[j-h]);
+            }
+        }
     }
 }
 
@@ -70,43 +100,6 @@ void accessFCFS(int* request, int numRequest)
     printSeqNPerformance(request, numRequest);
     puts("----------------");
     return;
-}
-
-// Interval length between two integers function
-int dist(int a, int b) { return abs(a - b); }
-
-// Shell sort (better insertion sort for longer arrays)
-// Supports subarrays and descending order flag
-void shellsort(int a[], int l, int r, bool descending, bool distCmp)
-{
-    if (l < 2 || l >= r-1) { return; }
-    int n = r - l;
-    for (int h = n < 701 ? 701 : n; h > 0; h/=2.3)
-    {
-        for (int i = h+l; i < r; i++)
-        {
-            int current = a[i];
-            if (distCmp)
-            {
-                int dist = descending ? INT_MIN : INT_MAX;
-                for (int j = i; j >= h+l &&
-                                (descending ?
-                                    abs(a[j-h]-current)<dist :
-                                    abs(a[j-h]-current)>dist);
-                     j-=h)
-                {
-                    swap(&a[j], &a[j-h]);
-                }
-            }
-            else
-            {
-                for (int j = i; j >= h+l && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
-                {
-                    swap(&a[j], &a[j-h]);
-                }
-            }
-        }
-    }
 }
 
 //access the disk location in SSTF
@@ -160,7 +153,7 @@ void accessSCAN(int* request, int numRequest)
         min = request[i] < min ? request[i] : min;
         max = request[i] > max ? request[i] : max;
     }
-    shellsort(request, 0, numRequest, false);
+    qsort(request, numRequest, sizeof(int), cmpfunc);
     int newCnt = numRequest;
     int l = 0;
     int r = numRequest;
@@ -169,14 +162,13 @@ void accessSCAN(int* request, int numRequest)
     int* newRequest = malloc(sizeof(int)*(newCnt + addLOW + addHIGH));
     int idx = 0;
     while (request[idx] < START) { idx++; }
-    // bool ascending = HIGH-idx <= idx-LOW ? true : false;
-    bool ascending = max-START <= START-min ? true : false;
+    bool ascending = HIGH-START <= START-LOW;
     if (ascending)
     {
         for (int i = idx; i < numRequest; i++)
             { swap(&request[i], &request[i-idx]); }
         int idx2 = numRequest - idx;
-        shellsort(request, idx2, numRequest, true);
+        shellsort(request, idx2, numRequest, cmpfuncrev);
         int i = 0;
         for (; i < idx2; i++)
         {
@@ -202,10 +194,7 @@ void accessSCAN(int* request, int numRequest)
     }
     else
     {
-        if (addLOW)
-        {
-        }
-        shellsort(request, 0, idx, true);
+        shellsort(request, 0, idx, cmpfuncrev);
         int i = 0;
         for (; i < idx; i++)
         {
@@ -295,11 +284,11 @@ int main()
     /**
      * TEST
      * SSTF : 53->54->55->52->59->10->9->8->7->6->1
-     * SCAN : 53->54->55->59->HIGH->52->10->9->8->7->6->1->LOW
+     * SCAN : 53->52->10->9->8->7->6->1->LOW->54->55->59->HIGH
      */
     int request[] = {59,54,55,52,1,10,6,7,9,8};
-    // int request[] = {51,52,54,55,56,57,58}; // descending
-    // int request[] = {48,49,50,51,52,54,55}; // ascending
+    // int request[] = {51,52,54,55,56,57,58};
+    // int request[] = {48,49,50,51,52,54,55};
     numRequest = sizeof(request)/sizeof(typeof(request[0]));
 
     puts("\nSelect the policy : ");
