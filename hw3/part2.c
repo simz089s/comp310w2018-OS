@@ -77,18 +77,33 @@ int dist(int a, int b) { return abs(a - b); }
 
 // Shell sort (better insertion sort for longer arrays)
 // Supports subarrays and descending order flag
-void shellsort(int a[], int l, int r, bool descending)
+void shellsort(int a[], int l, int r, bool descending, bool distCmp)
 {
-    if (l >= r-1 || l < 0 || r < 0) { return; }
+    if (l < 2 || l >= r-1) { return; }
     int n = r - l;
     for (int h = n < 701 ? 701 : n; h > 0; h/=2.3)
     {
         for (int i = h+l; i < r; i++)
         {
             int current = a[i];
-            for (int j = i; j >= h+l && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
+            if (distCmp)
             {
-                swap(&a[j], &a[j-h]);
+                int dist = descending ? INT_MIN : INT_MAX;
+                for (int j = i; j >= h+l &&
+                                (descending ?
+                                    abs(a[j-h]-current)<dist :
+                                    abs(a[j-h]-current)>dist);
+                     j-=h)
+                {
+                    swap(&a[j], &a[j-h]);
+                }
+            }
+            else
+            {
+                for (int j = i; j >= h+l && (descending ? a[j-h]<current : a[j-h]>current); j-=h)
+                {
+                    swap(&a[j], &a[j-h]);
+                }
             }
         }
     }
@@ -100,13 +115,8 @@ void accessSSTF(int* request, int numRequest)
     //write your logic here
     /**
      * Pick direction of closest request to START
-     * If greater, sort all numbers greater than START to righthand side
-     * and descending order for requests smaller than START to lefthand side
-     * Vice-versa if starting request is smaller
-     *
-     * Here I just used a naive bruteforce algorithm that finds the closest
-     * element right of the current one going from left to right (smaller to
-     * bigger) index in the array for every element consecutively
+     * Find closest request among remaining ones
+     * Do this for the chosen request, for every request consecutively
      */
     int nearestDist = abs(request[0] - START);
     for (int i = 1; i < numRequest; i++)
