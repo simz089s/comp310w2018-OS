@@ -49,11 +49,9 @@ void swap(int* a, int* b)
     }
 }
 
-// UNUSED
 // Interval length between two integers function
 int dist(int a, int b) { return abs(a - b); }
 
-// UNUSED
 // Shell sort (better insertion sort for longer arrays)
 // Supports subarrays
 void shellsort(int a[], int l, int r, __compar_fn_t cmp)//, bool descending)
@@ -144,7 +142,6 @@ void accessSSTF(int* request, int numRequest)
 //access the disk location in SCAN
 void accessSCAN(int* request, int numRequest)
 {
-    
 	//write your logic here
     int min = INT_MAX;
     int max = INT_MIN;
@@ -281,14 +278,26 @@ int main()
         // scanf("%d", &request[i]);
     }
 
+    // int request[] = {51,52,54,55,56,57,58};
+    // int request[] = {48,49,50,51,52,54,55};
     /**
      * TEST
      * SSTF : 53->54->55->52->59->10->9->8->7->6->1
-     * SCAN : 53->52->10->9->8->7->6->1->LOW->54->55->59->HIGH
+     * SCAN : 53->52->10->9->8->7->6->1->LOW->54->55->59
      */
-    int request[] = {59,54,55,52,1,10,6,7,9,8};
-    // int request[] = {51,52,54,55,56,57,58};
-    // int request[] = {48,49,50,51,52,54,55};
+    // int request[] = {59,54,55,52,1,10,6,7,9,8};
+    /**
+     * TEST
+     * SSTF : 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183
+     * SCAN : 53 -> 37 -> 14 -> LOW -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
+     * C-SCAN : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> HIGH -> LOW -> 14 -> 37
+     * LOOK : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 37 -> 14
+     * LOOK : 53 -> 37 -> 14 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
+     * C-LOOK : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> LOW -> 14 -> 37
+     * C-LOOK : 53 -> 37 -> 14 -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
+     */
+    int request[] = { 98, 183, 37, 122, 14, 124, 65, 67 };
+    
     numRequest = sizeof(request)/sizeof(typeof(request[0]));
 
     puts("\nSelect the policy : ");
