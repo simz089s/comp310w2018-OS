@@ -160,31 +160,35 @@ void accessSCAN(int* request, int numRequest)
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
     // If they are all on one side of START we won't "touch" LOW or HIGH
-    int newCnt = (min > START || max < START) ? numRequest : numRequest + 1;
+    bool addEND = min < START || max > START;
+    int newCnt = addEND ? numRequest+1 : numRequest;
     // int* newRequest = malloc(sizeof(int) * newCnt);
     int newRequest[newCnt];
-    int idx = 0;
-    while (request[idx] < START) { idx++; }
+
+    // Find position of START relative to sorted requests
+    int idxStart = 0;
+    while (request[idxStart] < START) { idxStart++; }
+
+    // Move towards nearest end
     bool ascending = HIGH-START <= START-LOW;
     if (ascending)
     {
-        for (int i = idx; i < numRequest; i++)
-            { swap(&request[i], &request[i-idx]); }
-        int idx2 = numRequest - idx;
-        shellsort(request, idx2, numRequest, cmpfuncrev);
+        for (int i = idxStart; i < numRequest; i++)
+        {
+            swap(&request[i], &request[i-idxStart]);
+        }
+        int idxNew = numRequest - idxStart;
+        shellsort(request, idxNew, numRequest, cmpfuncrev);
         int i = 0;
-        for (; i < idx2; i++)
+        for (; i < idxNew; i++)
         {
             newRequest[i] = request[i];
         }
-        if (addHIGH)
+        if (addEND)
         {
             newRequest[i] = HIGH;
-            l++;
-            r++;
-            newCnt++;
         }
-        for (i = addHIGH?idx2+1:idx2; i < r; i++)
+        for (i = addEND?idxNew+1:idxNew; i < r; i++)
         {
             if (addHIGH) { newRequest[i] = request[i-l]; }
             else { newRequest[i] = request[i-l]; }
@@ -197,9 +201,9 @@ void accessSCAN(int* request, int numRequest)
     }
     else
     {
-        shellsort(request, 0, idx, cmpfuncrev);
+        shellsort(request, 0, idxStart, cmpfuncrev);
         int i = 0;
-        for (; i < idx; i++)
+        for (; i < idxStart; i++)
         {
             newRequest[i] = request[i];
         }
@@ -210,7 +214,7 @@ void accessSCAN(int* request, int numRequest)
             r++;
             newCnt++;
         }
-        for (i = addLOW?idx+1:idx; i < r; i++)
+        for (i = addLOW?idxStart+1:idxStart; i < r; i++)
         {
             newRequest[i] = request[i-l];
         }
@@ -223,7 +227,7 @@ void accessSCAN(int* request, int numRequest)
     puts("\n----------------");
     printf("SCAN :");
     printSeqNPerformance(newRequest, newCnt);
-    free(newRequest);
+    // free(newRequest);
     puts("----------------");
     return;
 }
