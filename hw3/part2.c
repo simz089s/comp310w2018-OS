@@ -143,6 +143,8 @@ void accessSSTF(int* request, int numRequest)
 void accessSCAN(int* request, int numRequest)
 {
 	//write your logic here
+
+    // Find min and max request
     int min = INT_MAX;
     int max = INT_MIN;
     for (int i = 0; i < numRequest; i++)
@@ -150,13 +152,17 @@ void accessSCAN(int* request, int numRequest)
         min = request[i] < min ? request[i] : min;
         max = request[i] > max ? request[i] : max;
     }
+
+    /**
+     * Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
+     * around the START point, so sorting will be common.
+     */
     qsort(request, numRequest, sizeof(int), cmpfunc);
-    int newCnt = numRequest;
-    int l = 0;
-    int r = numRequest;
-    bool addLOW = (request[0] != LOW);
-    bool addHIGH = (request[numRequest-1] != HIGH);
-    int* newRequest = malloc(sizeof(int)*(newCnt + addLOW + addHIGH));
+
+    // If they are all on one side of START we won't "touch" LOW or HIGH
+    int newCnt = (min > START || max < START) ? numRequest : numRequest + 1;
+    // int* newRequest = malloc(sizeof(int) * newCnt);
+    int newRequest[newCnt];
     int idx = 0;
     while (request[idx] < START) { idx++; }
     bool ascending = HIGH-START <= START-LOW;
@@ -226,10 +232,7 @@ void accessSCAN(int* request, int numRequest)
 void accessCSCAN(int* request, int numRequest)
 {
     //write your logic here
-    // shellsort(request, 0, numRequest, false);
-    // shellsort(request, 0, numRequest, true);
-    // int* newRequest = request;
-    // int newCnt = numRequest;
+    int newCnt = numRequest + 2; // or +0
     puts("\n----------------");
     printf("CSCAN :");
     // printSeqNPerformance(newRequest, newCnt);
@@ -241,9 +244,7 @@ void accessCSCAN(int* request, int numRequest)
 void accessLOOK(int* request, int numRequest)
 {
     //write your logic here
-    // int idx = 0;
-    // while (request[idx] < START) { idx++; }
-    // bool goRight = request[numRequest]-idx < idx-request[0] ? true : false;
+    int newCnt = numRequest;
     puts("\n----------------");
     printf("LOOK :");
     // printSeqNPerformance(newRequest, newCnt);
@@ -255,6 +256,7 @@ void accessLOOK(int* request, int numRequest)
 void accessCLOOK(int* request, int numRequest)
 {
     //write your logic here
+    int newCnt = numRequest + 1; // or +0
     puts("\n----------------");
     printf("CLOOK :");
     // printSeqNPerformance(newRequest,newCnt);
