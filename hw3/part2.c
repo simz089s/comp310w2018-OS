@@ -17,8 +17,7 @@
 
 #define LOW 0
 #define HIGH 199
-// #define START 53
-#define START 100
+#define START 53
 
 //compare function for qsort
 //you might have to sort the request array
@@ -293,7 +292,7 @@ void accessLOOK(int* request, int numRequest)
 {
     //write your logic here
 
-    // Mostly same as SCAN
+    // Similar to SCAN
 
     bool ascending = HIGH-START <= START-LOW;
 
@@ -338,10 +337,62 @@ void accessLOOK(int* request, int numRequest)
 void accessCLOOK(int* request, int numRequest)
 {
     //write your logic here
-    int newCnt = numRequest + 1; // or +0
+
+    // Mostly similar to CSCAN
+
+    int min = INT_MAX;
+    int max = INT_MIN;
+    for (int i = 0; i < numRequest; i++)
+    {
+        min = request[i] < min ? request[i] : min;
+        max = request[i] > max ? request[i] : max;
+    }
+
+    qsort(request, numRequest, sizeof(int), cmpfunc);
+
+    int idxStart = 0;
+    while (request[idxStart] < START && idxStart < numRequest) { idxStart++; }
+
+    bool ascending = HIGH-START <= START-LOW;
+
+    bool noFlyback = (ascending && min > START) || (!ascending && max < START);
+
+    int newCnt = noFlyback ? numRequest : numRequest+1;
+    int* newRequest = noFlyback ? request : realloc(request, newCnt*sizeof(int));
+
+    if (noFlyback)
+    {
+        qsort(newRequest, newCnt, sizeof(int), (ascending ? cmpfunc : cmpfuncrev));
+    }
+    else if (ascending)
+    {
+        for (int i = idxStart; i < numRequest; i++)
+        {
+            swap(&newRequest[i], &newRequest[i-idxStart]);
+        }
+        int idxNew = numRequest - idxStart;
+        rqsort(newRequest, idxNew, numRequest, cmpfunc);
+        // Flyback
+        for (int i = newCnt-1; i > idxNew; i--)
+        {
+            newRequest[i] = newRequest[i-1];
+        }
+        newRequest[idxNew] = LOW;
+    }
+    else
+    {
+        rqsort(newRequest, 0, idxStart, cmpfuncrev);
+        rqsort(newRequest, idxStart, numRequest, cmpfuncrev);
+        for (int i = newCnt-1; i > idxStart; i--)
+        {
+            newRequest[i] = newRequest[i-1];
+        }
+        newRequest[idxStart] = HIGH;
+    }
+
     puts("\n----------------");
     printf("CLOOK :");
-    // printSeqNPerformance(newRequest,newCnt);
+    printSeqNPerformance(newRequest,newCnt);
     puts("----------------");
     return;
 }
