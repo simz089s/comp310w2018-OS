@@ -17,7 +17,8 @@
 
 #define LOW 0
 #define HIGH 199
-#define START 53
+// #define START 53
+#define START 13
 
 //compare function for qsort
 //you might have to sort the request array
@@ -184,7 +185,7 @@ void accessSCAN(int* request, int numRequest)
         }
         int idxNew = numRequest - idxStart;
         shellsort(newRequest, idxNew, numRequest, cmpfuncrev);
-        for (int i = idxNew+1; i < newCnt; i++)
+        for (int i = newCnt-1; i > idxNew; i--)
         {
             newRequest[i] = newRequest[i-1];
         }
@@ -193,7 +194,7 @@ void accessSCAN(int* request, int numRequest)
     else
     {
         shellsort(newRequest, 0, idxStart, cmpfuncrev);
-        for (int i = idxStart+1; i < newCnt; i++)
+        for (int i = newCnt-1; i > idxStart; i--)
         {
             newRequest[i] = newRequest[i-1];
         }
@@ -282,7 +283,7 @@ int main()
     request = malloc(numRequest * sizeof(int));
     for (int i = 0; i < numRequest; i++) { request[i] = newRequest[i]; }
 
-    // 
+    // -------------------------------------------------------------------------
 
     puts("\nSelect the policy : ");
     puts("----------------");
