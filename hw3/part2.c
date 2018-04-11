@@ -18,7 +18,7 @@
 #define LOW 0
 #define HIGH 199
 // #define START 53
-#define START 53
+#define START 100
 
 //compare function for qsort
 //you might have to sort the request array
@@ -163,6 +163,7 @@ void accessSCAN(int* request, int numRequest)
     /**
      * Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
      * around the START point, so sorting will be common.
+     * So idxStart is a kind of "pivot" or "anchor point".
      */
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
@@ -185,12 +186,15 @@ void accessSCAN(int* request, int numRequest)
     }
     else if (ascending)
     {
+        // Put requests above sorted in front of queue
         for (int i = idxStart; i < numRequest; i++)
         {
             swap(&newRequest[i], &newRequest[i-idxStart]);
         }
+        // Sort the rest in descending order for when the head goes back in reverse
         int idxNew = numRequest - idxStart;
         shellsort(newRequest, idxNew, numRequest, cmpfuncrev);
+        // Add touching the end
         for (int i = newCnt-1; i > idxNew; i--)
         {
             newRequest[i] = newRequest[i-1];
@@ -199,7 +203,9 @@ void accessSCAN(int* request, int numRequest)
     }
     else
     {
+        // Sort the below part in front of the sorted queue in descending order
         shellsort(newRequest, 0, idxStart, cmpfuncrev);
+        // Add touching the end
         for (int i = newCnt-1; i > idxStart; i--)
         {
             newRequest[i] = newRequest[i-1];
@@ -219,7 +225,8 @@ void accessCSCAN(int* request, int numRequest)
 {
     //write your logic here
 
-    // Find min and max request
+    // Mostly same as SCAN
+
     int min = INT_MAX;
     int max = INT_MIN;
     for (int i = 0; i < numRequest; i++)
@@ -228,20 +235,13 @@ void accessCSCAN(int* request, int numRequest)
         max = request[i] > max ? request[i] : max;
     }
 
-    /**
-     * Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
-     * around the START point, so sorting will be common.
-     */
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
-    // Find position of START relative to sorted requests
     int idxStart = 0;
     while (request[idxStart] < START && idxStart < numRequest) { idxStart++; }
 
-    // Move towards nearest end
     bool ascending = HIGH-START <= START-LOW;
 
-    // For special case where all to one side of START and in the same direction
     bool addEND = (ascending && min < START) || (!ascending && max > START);
 
     int newCnt = addEND ? numRequest+2 : numRequest;
@@ -257,8 +257,10 @@ void accessCSCAN(int* request, int numRequest)
         {
             swap(&newRequest[i], &newRequest[i-idxStart]);
         }
+        // Same as SCAN except do not sort the rest in descending order
         int idxNew = numRequest - idxStart;
         rqsort(newRequest, idxNew, numRequest, cmpfunc);
+        // Also add flyback
         for (int i = newCnt-1; i > idxNew+1; i--)
         {
             newRequest[i] = newRequest[i-2];
@@ -268,6 +270,7 @@ void accessCSCAN(int* request, int numRequest)
     }
     else
     {
+        // Simply sort in descending order both "sides" and add the ends
         rqsort(newRequest, 0, idxStart, cmpfuncrev);
         rqsort(newRequest, idxStart, numRequest, cmpfuncrev);
         for (int i = newCnt-1; i > idxStart+1; i--)
@@ -289,10 +292,44 @@ void accessCSCAN(int* request, int numRequest)
 void accessLOOK(int* request, int numRequest)
 {
     //write your logic here
-    int newCnt = numRequest;
+
+    // Mostly same as SCAN
+
+    bool ascending = HIGH-START <= START-LOW;
+
+    int min = INT_MAX;
+    int max = INT_MIN;
+    for (int i = 0; i < numRequest; i++)
+    {
+        min = request[i] < min ? request[i] : min;
+        max = request[i] > max ? request[i] : max;
+    }
+    bool revsDir = (ascending && min < START) || (!ascending && max > START);
+
+    qsort(request, numRequest, sizeof(int), cmpfunc);
+    int idxStart = 0;
+    while (request[idxStart] < START && idxStart < numRequest) { idxStart++; }
+
+    if (!revsDir && !ascending)
+    {
+        qsort(request, numRequest, sizeof(int), cmpfuncrev);
+    }
+    else if (ascending)
+    {
+        for (int i = idxStart; i < numRequest; i++)
+        {
+            swap(&request[i], &request[i-idxStart]);
+        }
+        rqsort(request, numRequest-idxStart, numRequest, cmpfuncrev);
+    }
+    else
+    {
+        rqsort(request, 0, idxStart, cmpfuncrev);
+    }
+
     puts("\n----------------");
     printf("LOOK :");
-    // printSeqNPerformance(newRequest, newCnt);
+    printSeqNPerformance(request, numRequest);
     puts("----------------");
     return;
 }
