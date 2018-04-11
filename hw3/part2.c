@@ -18,7 +18,7 @@
 #define LOW 0
 #define HIGH 199
 // #define START 53
-#define START 13
+#define START 53
 
 //compare function for qsort
 //you might have to sort the request array
@@ -54,7 +54,7 @@ void swap(int* a, int* b)
 int dist(int a, int b) { return abs(a - b); }
 
 // Shell sort (better insertion sort for longer arrays)
-// Supports subarrays
+// With ranges
 void shellsort(int a[], int l, int r, __compar_fn_t cmp)//, bool descending)
 {
     int n = r - l;
@@ -71,6 +71,12 @@ void shellsort(int a[], int l, int r, __compar_fn_t cmp)//, bool descending)
             }
         }
     }
+}
+
+// qsort int with range
+void rqsort(int* base, int start, int end, __compar_fn_t compar)
+{
+    qsort(base+start, end-start, sizeof(int), compar);
 }
 
 //Prints the sequence and the performance metric
@@ -200,6 +206,7 @@ void accessSCAN(int* request, int numRequest)
         }
         newRequest[idxStart] = LOW;
     }
+
     puts("\n----------------");
     printf("SCAN :");
     printSeqNPerformance(newRequest, newCnt);
@@ -211,10 +218,69 @@ void accessSCAN(int* request, int numRequest)
 void accessCSCAN(int* request, int numRequest)
 {
     //write your logic here
-    int newCnt = numRequest + 2; // or +0
+
+    // Find min and max request
+    int min = INT_MAX;
+    int max = INT_MIN;
+    for (int i = 0; i < numRequest; i++)
+    {
+        min = request[i] < min ? request[i] : min;
+        max = request[i] > max ? request[i] : max;
+    }
+
+    /**
+     * Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
+     * around the START point, so sorting will be common.
+     */
+    qsort(request, numRequest, sizeof(int), cmpfunc);
+
+    // Find position of START relative to sorted requests
+    int idxStart = 0;
+    while (request[idxStart] < START && idxStart < numRequest) { idxStart++; }
+
+    // Move towards nearest end
+    bool ascending = HIGH-START <= START-LOW;
+
+    // For special case where all to one side of START and in the same direction
+    bool addEND = (ascending && min < START) || (!ascending && max > START);
+
+    int newCnt = addEND ? numRequest+2 : numRequest;
+    int* newRequest = addEND ? realloc(request, newCnt*sizeof(int)) : request;
+
+    if (!addEND)
+    {
+        qsort(newRequest, newCnt, sizeof(int), (ascending ? cmpfunc : cmpfuncrev));
+    }
+    else if (ascending)
+    {
+        for (int i = idxStart; i < numRequest; i++)
+        {
+            swap(&newRequest[i], &newRequest[i-idxStart]);
+        }
+        int idxNew = numRequest - idxStart;
+        rqsort(newRequest, idxNew, numRequest, cmpfunc);
+        for (int i = newCnt-1; i > idxNew+1; i--)
+        {
+            newRequest[i] = newRequest[i-2];
+        }
+        newRequest[idxNew] = HIGH;
+        newRequest[idxNew+1] = LOW;
+    }
+    else
+    {
+        rqsort(newRequest, 0, idxStart, cmpfuncrev);
+        rqsort(newRequest, idxStart, numRequest, cmpfuncrev);
+        for (int i = newCnt-1; i > idxStart+1; i--)
+        {
+            newRequest[i] = newRequest[i-2];
+        }
+        newRequest[idxStart] = LOW;
+        newRequest[idxStart+1] = HIGH;
+    }
+
     puts("\n----------------");
     printf("CSCAN :");
-    // printSeqNPerformance(newRequest, newCnt);
+    printSeqNPerformance(newRequest, newCnt);
     puts("----------------");
     return;
 }
@@ -271,10 +337,8 @@ int main()
      * TEST
      * SSTF : 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183
      * SCAN : 53 -> 37 -> 14 -> LOW -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
-     * C-SCAN : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> HIGH -> LOW -> 14 -> 37
-     * LOOK : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> 37 -> 14
+     * C-SCAN : 53 -> 37 -> 14 -> LOW -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
      * LOOK : 53 -> 37 -> 14 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
-     * C-LOOK : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> LOW -> 14 -> 37
      * C-LOOK : 53 -> 37 -> 14 -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
      */
     int newRequest[] = { 98, 183, 37, 122, 14, 124, 65, 67 };
