@@ -159,15 +159,12 @@ void accessSCAN(int* request, int numRequest)
      */
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
-    // If they are all on one side of START we won't "touch" LOW or HIGH
-    bool addEND = min < START || max > START;
-    int newCnt = addEND ? numRequest+1 : numRequest;
-    // int* newRequest = malloc(sizeof(int) * newCnt);
-    int newRequest[newCnt];
+    int newCnt = numRequest + 1;
+    int* newRequest = realloc(request, sizeof(int)*newCnt);
 
     // Find position of START relative to sorted requests
     int idxStart = 0;
-    while (request[idxStart] < START) { idxStart++; }
+    while (newRequest[idxStart] < START && idxStart < numRequest) { idxStart++; }
 
     // Move towards nearest end
     bool ascending = HIGH-START <= START-LOW;
@@ -175,54 +172,24 @@ void accessSCAN(int* request, int numRequest)
     {
         for (int i = idxStart; i < numRequest; i++)
         {
-            swap(&request[i], &request[i-idxStart]);
+            swap(&newRequest[i], &newRequest[i-idxStart]);
         }
         int idxNew = numRequest - idxStart;
-        shellsort(request, idxNew, numRequest, cmpfuncrev);
-        int i = 0;
-        for (; i < idxNew; i++)
+        shellsort(newRequest, idxNew, numRequest, cmpfuncrev);
+        for (int i = idxNew+1; i < newCnt; i++)
         {
-            newRequest[i] = request[i];
+            newRequest[i] = newRequest[i-1];
         }
-        if (addEND)
-        {
-            newRequest[i] = HIGH;
-        }
-        for (i = addEND?idxNew+1:idxNew; i < r; i++)
-        {
-            if (addHIGH) { newRequest[i] = request[i-l]; }
-            else { newRequest[i] = request[i-l]; }
-        }
-        if (addLOW)
-        {
-            request[i] = LOW;
-            newCnt++;
-        }
+        newRequest[idxNew] = HIGH;
     }
     else
     {
-        shellsort(request, 0, idxStart, cmpfuncrev);
-        int i = 0;
-        for (; i < idxStart; i++)
+        shellsort(newRequest, 0, idxStart, cmpfuncrev);
+        for (int i = idxStart+1; i < newCnt; i++)
         {
-            newRequest[i] = request[i];
+            newRequest[i] = newRequest[i-1];
         }
-        if (addLOW)
-        {
-            newRequest[i] = LOW;
-            l++;
-            r++;
-            newCnt++;
-        }
-        for (i = addLOW?idxStart+1:idxStart; i < r; i++)
-        {
-            newRequest[i] = request[i-l];
-        }
-        if (addHIGH)
-        {
-            newRequest[i] = HIGH;
-            newCnt++;
-        }
+        newRequest[idxStart] = LOW;
     }
     puts("\n----------------");
     printf("SCAN :");
