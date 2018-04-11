@@ -159,16 +159,24 @@ void accessSCAN(int* request, int numRequest)
      */
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
-    int newCnt = numRequest + 1;
-    int* newRequest = realloc(request, sizeof(int)*newCnt);
-
     // Find position of START relative to sorted requests
     int idxStart = 0;
-    while (newRequest[idxStart] < START && idxStart < numRequest) { idxStart++; }
+    while (request[idxStart] < START && idxStart < numRequest) { idxStart++; }
 
     // Move towards nearest end
     bool ascending = HIGH-START <= START-LOW;
-    if (ascending)
+
+    // For special case where all to one side of START and in the same direction
+    bool addEND = (ascending && min < START) || (!ascending && max > START);
+
+    int newCnt = addEND ? numRequest+1 : numRequest;
+    int* newRequest = addEND ? realloc(request, newCnt*sizeof(int)) : request;
+
+    if (!addEND)
+    {
+        qsort(newRequest, newCnt, sizeof(int), (ascending ? cmpfunc : cmpfuncrev));
+    }
+    else if (ascending)
     {
         for (int i = idxStart; i < numRequest; i++)
         {
@@ -194,7 +202,6 @@ void accessSCAN(int* request, int numRequest)
     puts("\n----------------");
     printf("SCAN :");
     printSeqNPerformance(newRequest, newCnt);
-    // free(newRequest);
     puts("----------------");
     return;
 }
@@ -237,7 +244,7 @@ void accessCLOOK(int* request, int numRequest)
 
 int main()
 {
-    // int* request;
+    int* request;
     int numRequest, ans;
 
     //allocate memory to store requests
@@ -251,14 +258,14 @@ int main()
         // scanf("%d", &request[i]);
     }
 
-    // int request[] = {51,52,54,55,56,57,58};
-    // int request[] = {48,49,50,51,52,54,55};
+    // int newRequest[] = {51,52,54,55,56,57,58};
+    // int newRequest[] = {48,49,50,51,52,54,55};
     /**
      * TEST
      * SSTF : 53->54->55->52->59->10->9->8->7->6->1
      * SCAN : 53->52->10->9->8->7->6->1->LOW->54->55->59
      */
-    // int request[] = {59,54,55,52,1,10,6,7,9,8};
+    // int newRequest[] = {59,54,55,52,1,10,6,7,9,8};
     /**
      * TEST
      * SSTF : 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183
@@ -269,9 +276,13 @@ int main()
      * C-LOOK : 53 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183 -> LOW -> 14 -> 37
      * C-LOOK : 53 -> 37 -> 14 -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
      */
-    int request[] = { 98, 183, 37, 122, 14, 124, 65, 67 };
+    int newRequest[] = { 98, 183, 37, 122, 14, 124, 65, 67 };
     
-    numRequest = sizeof(request)/sizeof(typeof(request[0]));
+    numRequest = sizeof(newRequest)/sizeof(typeof(newRequest[0]));
+    request = malloc(numRequest * sizeof(int));
+    for (int i = 0; i < numRequest; i++) { request[i] = newRequest[i]; }
+
+    // 
 
     puts("\nSelect the policy : ");
     puts("----------------");
