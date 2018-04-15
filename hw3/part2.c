@@ -1,10 +1,7 @@
-/**
- * Student name : Simon Zheng
- * Student ID   : 260744353
- */
-
-// TODO: REMOVE TEST CODE!!!
-
+/*\
+\|/ Student name : Simon Zheng
+/|\ Student ID   : 260744353
+\*/
 #include <stdio.h>  //for printf and scanf
 #include <stdlib.h> //for malloc
 #include <limits.h>
@@ -28,6 +25,8 @@ int cmpfunc (const void* a, const void* b)
 {
    return *(int*)a - *(int*)b;
 }
+
+// Reverse sorts
 int cmpfuncrev (const void* a, const void* b)
 {
    return *(int*)b - *(int*)a;
@@ -38,14 +37,11 @@ void swap(int* a, int* b)
 {
     if (*a != *b)
     {
-        // *a = (*a ^ *b);
-        // *b = (*a ^ *b);
-        // *a = (*a ^ *b);
-        // (Marginally) faster and works if a==b :
-        int tmp = *a;
-        *a = *b;
-        *b = tmp;
-        return;
+        *a ^= *b ^= *a ^= *b;
+        // int tmp = *a;
+        // *a = *b;
+        // *b = tmp;
+        // return;
     }
 }
 
@@ -110,11 +106,11 @@ void accessFCFS(int* request, int numRequest)
 void accessSSTF(int* request, int numRequest)
 {
     //write your logic here
-    /**
-     * Pick direction of closest request to START
-     * Find closest request among remaining ones
-     * Do this for the chosen request, for every request consecutively
-     */
+    /*\
+    \|/ Pick direction of closest request to START
+     |  Find closest request among remaining ones
+    /|\ Do this for the chosen request, for every request consecutively
+    \*/
     int nearestDist = abs(request[0] - START);
     for (int i = 1; i < numRequest; i++)
     {
@@ -159,11 +155,11 @@ void accessSCAN(int* request, int numRequest)
         max = request[i] > max ? request[i] : max;
     }
 
-    /**
-     * Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
-     * around the START point, so sorting will be common.
-     * So idxStart is a kind of "pivot" or "anchor point".
-     */
+    /*\
+    \|/ Sort them. All SCAN and LOOK variants are pretty much two sorted sequences
+     |  around the START point, so sorting will be common.
+    /|\ So idxStart is a kind of "pivot" or "anchor point".
+    \*/
     qsort(request, numRequest, sizeof(int), cmpfunc);
 
     // Find position of START relative to sorted requests
@@ -404,38 +400,14 @@ int main()
 
     //allocate memory to store requests
     printf("Enter the number of disk access requests : ");
-    // scanf("%d", &numRequest);
-    // request = malloc(numRequest * sizeof(int));
+    scanf("%d", &numRequest);
+    request = malloc(numRequest * sizeof(int));
 
     printf("Enter the requests ranging between %d and %d\n", LOW, HIGH);
-    // for (int i = 0; i < numRequest; i++)
+    for (int i = 0; i < numRequest; i++)
     {
-        // scanf("%d", &request[i]);
+        scanf("%d", &request[i]);
     }
-
-    // int newRequest[] = {51,52,54,55,56,57,58};
-    // int newRequest[] = {48,49,50,51,52,54,55};
-    /**
-     * TEST
-     * SSTF : 53->54->55->52->59->10->9->8->7->6->1
-     * SCAN : 53->52->10->9->8->7->6->1->LOW->54->55->59
-     */
-    // int newRequest[] = {59,54,55,52,1,10,6,7,9,8};
-    /**
-     * TEST
-     * SSTF : 53 -> 65 -> 67 -> 37 -> 14 -> 98 -> 122 -> 124 -> 183
-     * SCAN : 53 -> 37 -> 14 -> LOW -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
-     * C-SCAN : 53 -> 37 -> 14 -> LOW -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
-     * LOOK : 53 -> 37 -> 14 -> 65 -> 67 -> 98 -> 122 -> 124 -> 183
-     * C-LOOK : 53 -> 37 -> 14 -> HIGH -> 183 -> 124 -> 122 -> 98 -> 67 -> 65
-     */
-    int newRequest[] = { 98, 183, 37, 122, 14, 124, 65, 67 };
-    
-    numRequest = sizeof(newRequest)/sizeof(typeof(newRequest[0]));
-    request = malloc(numRequest * sizeof(int));
-    for (int i = 0; i < numRequest; i++) { request[i] = newRequest[i]; }
-
-    // -------------------------------------------------------------------------
 
     puts("\nSelect the policy : ");
     puts("----------------");
