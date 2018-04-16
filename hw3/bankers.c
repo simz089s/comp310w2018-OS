@@ -8,6 +8,18 @@
 #include <time.h>
 #include <sys/time.h>
 
+// Vectors and matrices
+// char buf[4096];
+struct Resources
+{
+    int numProc, numRes;
+    int** avail;
+    int** max;
+    int** hold;
+    int** need;
+    int** req;
+} Res;
+
 // Semaphores
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t full_count;
@@ -35,9 +47,16 @@ bool isSafe()
 \|/ Implementation of Bankers Algorithm as described in the slides
 /|\ returns 1 if safe allocation 0 if not safe
 \*/
-int bankers_algorithm(int pr_id, int* request_vector)
+int bankers_algorithm(int pr_id, int* request_vector, struct Resources res)
 {
-
+    // Step 1:
+    for (int j = 0; j < res.numRes; j++)
+    {
+        if (res.req[pr_id][j] > res.need[pr_id][j])
+        {
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -73,6 +92,7 @@ int main(/*int argc, char* argv[argc]*/)
 
     char buf[4096];
     int numProc, numRes;
+    struct Resources res = {numProc, numRes, (int**)NULL,};
 
     printf("Enter number of processes: ");
     if (scanf("%s", buf) < 1)
