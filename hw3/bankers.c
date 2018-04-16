@@ -9,16 +9,13 @@
 #include <sys/time.h>
 
 // Vectors and matrices
-// char buf[4096];
-struct Resources
-{
-    int numProc, numRes;
-    int** avail;
-    int** max;
-    int** hold;
-    int** need;
-    int** req;
-} Res;
+char buf[4096];
+int numProc, numRes;
+int* Avail;
+int** Max;
+int** Hold;
+int** Need;
+// int** Req;
 
 // Semaphores
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -47,16 +44,50 @@ bool isSafe()
 \|/ Implementation of Bankers Algorithm as described in the slides
 /|\ returns 1 if safe allocation 0 if not safe
 \*/
-int bankers_algorithm(int pr_id, int* request_vector, struct Resources res)
+int bankers_algorithm(int pr_id, int* request_vector)
 {
-    // Step 1:
-    for (int j = 0; j < res.numRes; j++)
-    {
-        if (res.req[pr_id][j] > res.need[pr_id][j])
+    while (true) {
+        // Step 1:
+        for (int j = 0; j < numRes; j++)
+            { if (request_vector[j] > Need[pr_id][j]) { return -1; } }
+        
+        // Step 2:
+        bool reqAvail = true; // Assume initially requested is available
+        for (int j = 0; reqAvail && j < numRes; j++)
+            { if (request_vector[j] > Avail[j]) { reqAvail = false; } }
+        // If requested not available, go to step 1 (beginning of loop)
+        if (!reqAvail) { continue; }
+
+        // Step 3:
+        pthread_mutex_lock(&mutex);
+        // CS
+        for (int j = 0; j < numRes; j++)
         {
-            return -1;
+            // Provisional allocations
+            Avail[j] -= request_vector[j];
+            Hold[pr_id][j] += request_vector[j];
+            Need[pr_id][j] -= request_vector[j];
+        }
+        if (isSafe())
+        {
+            // Resources granted; done
+            pthread_mutex_unlock(&mutex);
+            break;
+        }
+        else
+        {
+            // Else go back to step 1 (beginning of loop)
+            for (int j = 0; j < numRes; j++)
+            {
+                // Cancel provisional allocations
+                Avail[j] += request_vector[j];
+                Hold[pr_id][j] -= request_vector[j];
+                Need[pr_id][j] += request_vector[j];
+            }
+            pthread_mutex_unlock(&mutex);
         }
     }
+
     return 0;
 }
 
@@ -90,9 +121,8 @@ int main(/*int argc, char* argv[argc]*/)
 {
     //Initialize all inputs to banker's algorithm
 
-    char buf[4096];
-    int numProc, numRes;
-    struct Resources res = {numProc, numRes, (int**)NULL,};
+    // char buf[4096];
+    // int numProc, numRes;
 
     printf("Enter number of processes: ");
     if (scanf("%s", buf) < 1)
@@ -107,38 +137,47 @@ int main(/*int argc, char* argv[argc]*/)
         { numRes = strtoimax(buf, (char**)NULL, 10); }
 
     printf("Enter Available Resources: ");
-    int availRes[numRes];
+    // int availRes[numRes];
+    Avail = malloc(numRes * sizeof(int));
     for (int i = 0; i < numRes; i++)
-        { scanf("%d", &availRes[i]); }
+        { scanf("%d", &Avail[i]); }
 
     puts("Enter Maximum Resources Each Process Can Claim:");
-    int maxRes[numProc][numRes];
+    // int maxRes[numProc][numRes];
+    Max = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++)
     {
+        Max[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++)
         {
-            scanf("%d", &maxRes[i][j]);
+            scanf("%d", &Max[i][j]);
         }
     }
 
-    int holdRes[numProc][numRes];
+    // int holdRes[numProc][numRes];
+    Hold = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++) {
+        Hold[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++) {
-            holdRes[i][j] = 0; } }
+            Hold[i][j] = 0; } }
 
-    int needRes[numProc][numRes];
+    // int needRes[numProc][numRes];
+    Need = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++) {
+        Need[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++) {
-            needRes[i][j] = maxRes[i][j]; } }
+            Need[i][j] = Max[i][j]; } }
     
     struct timeval t;
     gettimeofday(&t, NULL);
     srand(t.tv_usec * t.tv_sec);
 
-    int reqRes[numProc][numRes];
-    for (int i = 0; i < numProc; i++) {
-        for (int j = 0; j < numRes; j++) {
-            reqRes[i][j] = rand() % needRes[i][j]; } }
+    // int reqRes[numProc][numRes];
+    // Req = malloc(numProc * sizeof(int));
+    // for (int i = 0; i < numProc; i++) {
+    //     Req[i] = malloc(numRes * sizeof(int));
+    //     for (int j = 0; j < numRes; j++) {
+    //         Req[i][j] = rand() % Need[i][j]; } }
 
     sem_init(&full_count, 0, 0);
     sem_init(&empty_count, 0, numProc);
@@ -149,6 +188,14 @@ int main(/*int argc, char* argv[argc]*/)
 
     //create a thread to check for deadlock (deadlock_checker)
 
+    for (int i = 0; i < numProc; i++)
+    {
+        // pthread_join();
+    }
+    free(Avail);
+    free(Max);
+    free(Hold);
+    free(Need);
     return EXIT_SUCCESS;
 }
 
