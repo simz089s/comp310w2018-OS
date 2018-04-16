@@ -35,8 +35,43 @@ void request_simulator(int pr_id, int* request_vector)
 \*/
 bool isSafe()
 {
-
     bool isSafe = false;
+    int Work[numRes];
+    int Finish[numRes];
+
+    // Step 1:
+    for (int j = 0; j < numRes; j++)
+    {
+        Work[j] = Avail[j];
+    }
+    for (int i = 0; i < numProc; i++)
+    {
+        Finish[i] = false;
+    }
+
+    while (!isSafe)
+    {
+        // Step 2:
+        for (int i = 0; i < numProc; i++)
+        {
+            if (!Finish[i])
+            {
+                for (int j = 0; j < numRes; j++)
+                {
+                    if (Need[i][j] <= Work[j])
+                    {
+                        // Go to step 3
+                        for (int k = 0; k < numRes; k++) { Work[k] += Hold[i][k]; }
+                        Finish[i] = true;
+                        break;
+                    }
+                }
+                // if (Finish[i]) { break; } // Or not if we continue from where we left off
+            }
+        }
+    }
+    // Step 4:
+
     return isSafe;
 }
 
@@ -52,15 +87,18 @@ int bankers_algorithm(int pr_id, int* request_vector)
             { if (request_vector[j] > Need[pr_id][j]) { return -1; } }
         
         // Step 2:
+        pthread_mutex_lock(&mutex);
+        // CS
         bool reqAvail = true; // Assume initially requested is available
         for (int j = 0; reqAvail && j < numRes; j++)
             { if (request_vector[j] > Avail[j]) { reqAvail = false; } }
         // If requested not available, go to step 1 (beginning of loop)
-        if (!reqAvail) { continue; }
+        if (!reqAvail) {
+            pthread_mutex_unlock(&mutex);
+            continue;
+        }
 
         // Step 3:
-        pthread_mutex_lock(&mutex);
-        // CS
         for (int j = 0; j < numRes; j++)
         {
             // Provisional allocations
