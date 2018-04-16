@@ -7,6 +7,7 @@
 #include <semaphore.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 // Vectors and matrices
 char buf[4096];
@@ -27,7 +28,8 @@ sem_t empty_count;
 \*/
 void request_simulator(int pr_id, int* request_vector)
 {
-
+    for (int j = 0; j < numRes; j++)
+        { request_vector[j] = rand() % (Need[pr_id][j] + 1); }
 }
 
 /*\
@@ -49,37 +51,43 @@ bool isSafe()
         Finish[i] = false;
     }
 
+    int found = -1;
+    // bool allFinished = false;
     while (!isSafe)
     {
         // Step 2:
-        for (int i = 0; i < numProc; i++)
+        for (int i = 0; found == -1 && i < numProc; i++)
         {
+            // Loop through P[i]s or as long as not found (-1)
             if (!Finish[i])
             {
-                for (int j = 0; j < numRes; j++)
-                {
-                    if (Need[i][j] <= Work[j])
-                    {
-                        // Go to step 3
-                        for (int k = 0; k < numRes; k++) { Work[k] += Hold[i][k]; }
-                        Finish[i] = true;
-                        break;
-                    }
-                }
-                // if (Finish[i]) { break; } // Or not if we continue from where we left off
+                /* Check if every Need[i][j] <= Work[j] for P[i]
+                 * Else go to next P[i+1] (next outer loop iteration since found == -1) */
+                for (int j = 0; found == -1 && j < numRes; j++)
+                    { if (Need[i][j] > Work[j]) { break; } }
+                found = i; // If every Need[i][j] <= Work[j] for P[i] go to step 3
             }
         }
+        if (found == -1) { break; } // If no adequate P[i] found go to step 4
+
+        // Step 3:
+        // "Allocate" resources to found P
+        for (int j = 0; j < numRes; j++) { Work[j] += Hold[found][j]; }
+        Finish[found] = true; // Flag found P as finished
+        // Go to step 2 again
     }
     // Step 4:
-
-    return isSafe;
+    // Turns out I didn't need bool isSafe but I'll leave it
+    for (int i = 0; i < numProc; i++)
+        { if (!Finish[i]) { return false; } }
+    return true;
 }
 
 /*\
 \|/ Implementation of Bankers Algorithm as described in the slides
 /|\ returns 1 if safe allocation 0 if not safe
 \*/
-int bankers_algorithm(int pr_id, int* request_vector)
+bool bankers_algorithm(int pr_id, int* request_vector)
 {
     while (true) {
         // Step 1:
@@ -123,10 +131,11 @@ int bankers_algorithm(int pr_id, int* request_vector)
                 Need[pr_id][j] += request_vector[j];
             }
             pthread_mutex_unlock(&mutex);
+            // return false;
         }
     }
 
-    return 0;
+    return true;
 }
 
 /*\
@@ -134,7 +143,28 @@ int bankers_algorithm(int pr_id, int* request_vector)
 \*/
 void* process_simulator(void* pr_id)
 {
-
+    int th_id = *(int*)pr_id;
+    int request_vector[numRes];
+    while (true)
+    {
+        request_simulator(th_id, request_vector);
+        while (!bankers_algorithm(th_id, request_vector));
+        for (int j = 0; j < numRes; j++)
+        {
+            if (Need[th_id][j] != 0) { break; } // Sleep before making other request
+            else
+            {
+                // Release/free resources
+                for (int k = 0; k < numRes; k++)
+                {
+                    Avail[k] += Hold[th_id][k];
+                }
+                // Terminate
+                return NULL;
+            }
+        }
+        sleep(3);
+    }
 }
 
 /*\
