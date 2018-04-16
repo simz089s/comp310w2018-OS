@@ -5,6 +5,13 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
+#include <sys/time.h>
+
+// Semaphores
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t full_count;
+sem_t empty_count;
 
 /*\
  | Simulates resource requests by processes 
@@ -68,16 +75,21 @@ int main(/*int argc, char* argv[argc]*/)
     int numProc, numRes;
 
     printf("Enter number of processes: ");
-    if (scanf("%s", buf) < 1) { return EXIT_FAILURE; }
-    else { numProc = strtoimax(buf, (char**)NULL, 10); }
+    if (scanf("%s", buf) < 1)
+        { return EXIT_FAILURE; }
+    else
+        { numProc = strtoimax(buf, (char**)NULL, 10); }
 
     printf("Enter number of resources: ");
-    if (scanf("%s", buf) < 1) { return EXIT_FAILURE; }
-    else { numRes = strtoimax(buf, (char**)NULL, 10); }
+    if (scanf("%s", buf) < 1)
+        { return EXIT_FAILURE; }
+    else
+        { numRes = strtoimax(buf, (char**)NULL, 10); }
 
     printf("Enter Available Resources: ");
     int availRes[numRes];
-    for (int i = 0; i < numRes; i++) { scanf("%d", &availRes[i]); }
+    for (int i = 0; i < numRes; i++)
+        { scanf("%d", &availRes[i]); }
 
     puts("Enter Maximum Resources Each Process Can Claim:");
     int maxRes[numProc][numRes];
@@ -88,6 +100,28 @@ int main(/*int argc, char* argv[argc]*/)
             scanf("%d", &maxRes[i][j]);
         }
     }
+
+    int holdRes[numProc][numRes];
+    for (int i = 0; i < numProc; i++) {
+        for (int j = 0; j < numRes; j++) {
+            holdRes[i][j] = 0; } }
+
+    int needRes[numProc][numRes];
+    for (int i = 0; i < numProc; i++) {
+        for (int j = 0; j < numRes; j++) {
+            needRes[i][j] = maxRes[i][j]; } }
+    
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    srand(t.tv_usec * t.tv_sec);
+
+    int reqRes[numProc][numRes];
+    for (int i = 0; i < numProc; i++) {
+        for (int j = 0; j < numRes; j++) {
+            reqRes[i][j] = rand() % needRes[i][j]; } }
+
+    sem_init(&full_count, 0, 0);
+    sem_init(&empty_count, 0, numProc);
 
     //create threads simulating processes (process_simulator)
 
