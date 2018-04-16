@@ -49,6 +49,7 @@
                 "hw3/bankers.c",
                 "-o",
                 "hw3/bankers",
+                "-pthread"
             ],
             "presentation": {
                 "echo": true,
