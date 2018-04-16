@@ -35,9 +35,9 @@
             }
         },
         {
-            "label": "gcc gnu99 bankers",
+            "label": "bankers",
             "type": "shell",
-            "command": "gcc",
+            "command": "clang",
             "args": [
                 "-Wall",
                 "-Wpedantic",
@@ -60,10 +60,10 @@
             "problemMatcher": [
                 "$gcc"
             ],
-            "group": "build"/*{
+            "group": {
                 "kind": "build",
                 "isDefault": true
-            }*/
+            }
         }
     ]
 }
