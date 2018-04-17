@@ -248,6 +248,7 @@ int main(/*int argc, char* argv[argc]*/)
     printf("The Available Resources array is: ");
     for (int i = 0; i < numRes; i++)
         { printf("%d ", Avail[i]); }
+    puts("");
 
     struct timeval t;
     gettimeofday(&t, NULL);
