@@ -75,6 +75,7 @@ bool isSafe()
         for (int j = 0; j < numRes; j++) { Work[j] += Hold[found][j]; }
         Finish[found] = true; // Flag found P as finished
         // Go to step 2 again
+        found = -1; // Reset found
     }
     // Step 4:
     // Turns out I didn't need bool isSafe but I'll leave it
