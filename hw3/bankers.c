@@ -93,7 +93,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         // Step 1:
         for (int j = 0; j < numRes; j++)
             { if (request_vector[j] > Need[pr_id][j]) { return -1; } }
-        
+
         // Step 2:
         pthread_mutex_lock(&mutex);
         // CS
@@ -228,12 +228,12 @@ int main(/*int argc, char* argv[argc]*/)
         Need[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++) {
             Need[i][j] = Max[i][j]; } }
-    
+
     printf("Output:\nThe Number of each resource in the system is: ");
     for (int i = 0; i < numRes; i++)
         { printf("%d ", Avail[i]); }
-    
-    printf("The Allocated Resources table is:\n");
+
+    printf("\nThe Allocated Resources table is:\n");
     for (int i = 0; i < numProc; i++) {
         for (int j = 0; j < numRes; j++) { printf("%d ", Hold[i][j]); }
         puts("");
@@ -244,11 +244,11 @@ int main(/*int argc, char* argv[argc]*/)
         for (int j = 0; j < numRes; j++) { printf("%d ", Max[i][j]); }
         puts("");
     }
-    
+
     printf("The Available Resources array is: ");
     for (int i = 0; i < numRes; i++)
         { printf("%d ", Avail[i]); }
-    
+
     struct timeval t;
     gettimeofday(&t, NULL);
     srand(t.tv_usec * t.tv_sec);
