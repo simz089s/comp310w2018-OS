@@ -122,7 +122,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         }
         else
         {
-            // Else go back to step 1 (beginning of loop)
+            // Else go back to step 1
             for (int j = 0; j < numRes; j++)
             {
                 // Cancel provisional allocations
@@ -131,7 +131,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
                 Need[pr_id][j] += request_vector[j];
             }
             pthread_mutex_unlock(&mutex);
-            // return false;
+            return false;
         }
     }
 
@@ -151,19 +151,19 @@ void* process_simulator(void* pr_id)
         while (!bankers_algorithm(th_id, request_vector));
         for (int j = 0; j < numRes; j++)
         {
-            if (Need[th_id][j] != 0) { break; } // Sleep before making other request
+            // Check if cannot terminate
+            if (Need[th_id][j] != 0 || Hold[th_id][j] != Max[th_id][j]) { break; }
             else
             {
-                // Release/free resources
-                for (int k = 0; k < numRes; k++)
-                {
-                    Avail[k] += Hold[th_id][k];
-                }
+                // If can terminate, release/free resources
+                pthread_mutex_lock(&mutex);
+                for (int k = 0; k < numRes; k++) { Avail[k] += Hold[th_id][k]; }
+                pthread_mutex_unlock(&mutex);
                 // Terminate
                 return NULL;
             }
         }
-        sleep(3);
+        sleep(3); // Sleep before making other request if cannot terminate
     }
 }
 
@@ -189,9 +189,6 @@ int main(/*int argc, char* argv[argc]*/)
 {
     //Initialize all inputs to banker's algorithm
 
-    // char buf[4096];
-    // int numProc, numRes;
-
     printf("Enter number of processes: ");
     if (scanf("%s", buf) < 1)
         { return EXIT_FAILURE; }
@@ -205,13 +202,11 @@ int main(/*int argc, char* argv[argc]*/)
         { numRes = strtoimax(buf, (char**)NULL, 10); }
 
     printf("Enter Available Resources: ");
-    // int availRes[numRes];
     Avail = malloc(numRes * sizeof(int));
     for (int i = 0; i < numRes; i++)
         { scanf("%d", &Avail[i]); }
 
     puts("Enter Maximum Resources Each Process Can Claim:");
-    // int maxRes[numProc][numRes];
     Max = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++)
     {
@@ -222,44 +217,61 @@ int main(/*int argc, char* argv[argc]*/)
         }
     }
 
-    // int holdRes[numProc][numRes];
     Hold = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++) {
         Hold[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++) {
             Hold[i][j] = 0; } }
 
-    // int needRes[numProc][numRes];
     Need = malloc(numProc * sizeof(int));
     for (int i = 0; i < numProc; i++) {
         Need[i] = malloc(numRes * sizeof(int));
         for (int j = 0; j < numRes; j++) {
             Need[i][j] = Max[i][j]; } }
     
+    printf("Output:\nThe Number of each resource in the system is: ");
+    for (int i = 0; i < numRes; i++)
+        { printf("%d ", Avail[i]); }
+    
+    printf("The Allocated Resources table is:\n");
+    for (int i = 0; i < numProc; i++) {
+        for (int j = 0; j < numRes; j++) { printf("%d ", Hold[i][j]); }
+        puts("");
+    }
+
+    printf("The Maximum Claim table is:\n");
+    for (int i = 0; i < numProc; i++) {
+        for (int j = 0; j < numRes; j++) { printf("%d ", Max[i][j]); }
+        puts("");
+    }
+    
+    printf("The Available Resources array is: ");
+    for (int i = 0; i < numRes; i++)
+        { printf("%d ", Avail[i]); }
+    
     struct timeval t;
     gettimeofday(&t, NULL);
     srand(t.tv_usec * t.tv_sec);
 
-    // int reqRes[numProc][numRes];
-    // Req = malloc(numProc * sizeof(int));
-    // for (int i = 0; i < numProc; i++) {
-    //     Req[i] = malloc(numRes * sizeof(int));
-    //     for (int j = 0; j < numRes; j++) {
-    //         Req[i][j] = rand() % Need[i][j]; } }
-
     sem_init(&full_count, 0, 0);
     sem_init(&empty_count, 0, numProc);
 
+    pthread_t procs[numProc];
+    int ids[numProc];
+
     //create threads simulating processes (process_simulator)
+    for (int i = 0; i < numProc; i++)
+    {
+        ids[i] = i;
+        while (pthread_create(&procs[i], NULL, process_simulator, (void*)&ids[i]));
+    }
 
     //create a thread that takes away resources from the available pool (fault_simulator)
 
     //create a thread to check for deadlock (deadlock_checker)
 
-    for (int i = 0; i < numProc; i++)
-    {
-        // pthread_join();
-    }
+    for (int i = 0; i < numProc; i++) { pthread_join(procs[i], NULL); }
+    pthread_mutex_destroy(&mutex);
     free(Avail);
     free(Max);
     free(Hold);
