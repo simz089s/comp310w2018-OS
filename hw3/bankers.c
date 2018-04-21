@@ -20,8 +20,9 @@ int** Need;
 
 // Semaphores
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-sem_t full_count;
-sem_t empty_count;
+// sem_t full_count;
+// sem_t empty_count;
+sem_t semaphore;
 
 /*\
  | Simulates resource requests by processes 
@@ -96,6 +97,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
             { if (request_vector[j] > Need[pr_id][j]) { return -1; } }
 
         // Step 2:
+        sem_wait(&semaphore);
         pthread_mutex_lock(&mutex);
         // CS
         bool reqAvail = true; // Assume initially requested is available
@@ -104,6 +106,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         // If requested not available, go to step 1 (beginning of loop)
         if (!reqAvail) {
             pthread_mutex_unlock(&mutex);
+            sem_post(&semaphore);
             continue;
         }
 
@@ -119,6 +122,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         {
             // Resources granted; done
             pthread_mutex_unlock(&mutex);
+            sem_post(&semaphore);
             break;
         }
         else
@@ -132,6 +136,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
                 Need[pr_id][j] += request_vector[j];
             }
             pthread_mutex_unlock(&mutex);
+            sem_post(&semaphore);
             return false;
         }
     }
@@ -255,8 +260,9 @@ int main(/*int argc, char* argv[argc]*/)
     gettimeofday(&t, NULL);
     srand(t.tv_usec * t.tv_sec);
 
-    sem_init(&full_count, 0, 0);
-    sem_init(&empty_count, 0, numProc);
+    // sem_init(&full_count, 0, 0);
+    // sem_init(&empty_count, 0, numProc);
+    sem_init(&semaphore, 0, numProc);
 
     pthread_t procs[numProc];
     int ids[numProc];
