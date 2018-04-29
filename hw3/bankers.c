@@ -25,7 +25,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t semaphore;
 
 /*\
- | Simulates resource requests by processes 
+ | Simulates resource requests by processes
 \*/
 void request_simulator(int pr_id, int* request_vector)
 {
@@ -65,8 +65,15 @@ bool isSafe()
                 /* Check if every Need[i][j] <= Work[j] for P[i]
                  * Else go to next P[i+1] (next outer loop iteration since found == -1) */
                 for (int j = 0; found == -1 && j < numRes; j++)
-                    { if (Need[i][j] > Work[j]) { break; } }
-                found = i; // If every Need[i][j] <= Work[j] for P[i] go to step 3
+                {
+                    if (Need[i][j] > Work[j])
+                    {
+                        found = -2; // Process P[i] does not meet second criteria
+                        break;
+                    }
+                }
+                if (found != -2) { found = i; } // If every Need[i][j] <= Work[j] for P[i] go to step 3
+                else { found = -1; } // Reset found
             }
         }
         if (found == -1) { break; } // If no adequate P[i] found go to step 4
@@ -297,22 +304,22 @@ Enter Maximum Resources Each Process Can Claim:
 2 2
 Output:
 The Number of each resource in the system is: 2 2
-The Allocated Resources table is: 
+The Allocated Resources table is:
 0 0
 0 0
 0 0
-The Maximum Claim table is: 
+The Maximum Claim table is:
 2 2
 2 2
 2 2
 The Available Resources array is: 2 2
-Simulating fault 
-requesting resources for process 1 
+Simulating fault
+requesting resources for process 1
 The Resource vector requested array is: 0 1
-Checking if allocation is safe 
+Checking if allocation is safe
 System is safe: allocating
-requesting resources for process 2 
+requesting resources for process 2
 The Resource vector requested array is: 2 1
-Checking if allocation is safe 
+Checking if allocation is safe
 Allocation is not safe, cancelling
 */
