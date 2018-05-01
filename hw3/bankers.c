@@ -29,8 +29,14 @@ sem_t semaphore;
 \*/
 void request_simulator(int pr_id, int* request_vector)
 {
+    printf("Requesting resources for process %d\n", pr_id);
+    printf("The Resource vector requested array is:");
     for (int j = 0; j < numRes; j++)
-        { request_vector[j] = rand() % (Need[pr_id][j] + 1); }
+    {
+        request_vector[j] = rand() % (Need[pr_id][j] + 1);
+        printf(" %d", request_vector[j]);
+    }
+    puts("");
 }
 
 /*\
@@ -38,11 +44,11 @@ void request_simulator(int pr_id, int* request_vector)
 \*/
 bool isSafe()
 {
-    bool isSafe = false;
+    puts("Checking if allocation is safe");
     int Work[numRes];
     int Finish[numRes];
 
-    // Step 1:
+// Step_1:
     for (int j = 0; j < numRes; j++)
     {
         Work[j] = Avail[j];
@@ -53,10 +59,9 @@ bool isSafe()
     }
 
     int found = -1;
-    // bool allFinished = false;
-    while (!isSafe)
+    while (true)
     {
-        // Step 2:
+// Step_2:
         for (int i = 0; found == -1 && i < numProc; i++)
         {
             // Loop through P[i]s or as long as not found (-1)
@@ -69,7 +74,6 @@ bool isSafe()
                     if (Need[i][j] > Work[j])
                     {
                         found = -2; // Process P[i] does not meet second criteria
-                        break;
                     }
                 }
                 if (found != -2) { found = i; } // If every Need[i][j] <= Work[j] for P[i] go to step 3
@@ -78,15 +82,14 @@ bool isSafe()
         }
         if (found == -1) { break; } // If no adequate P[i] found go to step 4
 
-        // Step 3:
-        // "Allocate" resources to found P
+// Step_3:
+        // P found terminates and releases its resources; continue testing
         for (int j = 0; j < numRes; j++) { Work[j] += Hold[found][j]; }
         Finish[found] = true; // Flag found P as finished
-        // Go to step 2 again
         found = -1; // Reset found
+        // Go to step 2 again
     }
-    // Step 4:
-    // Turns out I didn't need bool isSafe but I'll leave it
+// Step_4:
     for (int i = 0; i < numProc; i++)
         { if (!Finish[i]) { return false; } }
     return true;
@@ -99,14 +102,20 @@ bool isSafe()
 bool bankers_algorithm(int pr_id, int* request_vector)
 {
     while (true) {
-        // Step 1:
+// Step_1:
         for (int j = 0; j < numRes; j++)
-            { if (request_vector[j] > Need[pr_id][j]) { return -1; } }
+        {
+            if (request_vector[j] > Need[pr_id][j])
+            {
+                fprintf(stderr, "Error: process %d requesting more than needed\n", pr_id);
+                return false;
+            }
+        }
 
-        // Step 2:
+// Step_2:
         sem_wait(&semaphore);
         pthread_mutex_lock(&mutex);
-        // CS
+// Critical Section
         bool reqAvail = true; // Assume initially requested is available
         for (int j = 0; reqAvail && j < numRes; j++)
             { if (request_vector[j] > Avail[j]) { reqAvail = false; } }
@@ -117,7 +126,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
             continue;
         }
 
-        // Step 3:
+// Step_3:
         for (int j = 0; j < numRes; j++)
         {
             // Provisional allocations
@@ -130,11 +139,13 @@ bool bankers_algorithm(int pr_id, int* request_vector)
             // Resources granted; done
             pthread_mutex_unlock(&mutex);
             sem_post(&semaphore);
+            puts("System is safe: allocating");
             break;
         }
         else
         {
-            // Else go back to step 1
+            // Else go back to step 1 (return false and get called again repeatedly)
+            puts("Allocation is not safe, cancelling");
             for (int j = 0; j < numRes; j++)
             {
                 // Cancel provisional allocations
@@ -169,9 +180,11 @@ void* process_simulator(void* pr_id)
             else
             {
                 // If can terminate, release/free resources
+                sem_wait(&semaphore);
                 pthread_mutex_lock(&mutex);
                 for (int k = 0; k < numRes; k++) { Avail[k] += Hold[th_id][k]; }
                 pthread_mutex_unlock(&mutex);
+                sem_post(&semaphore);
                 // Terminate
                 return NULL;
             }
@@ -203,13 +216,13 @@ int main(/*int argc, char* argv[argc]*/)
     //Initialize all inputs to banker's algorithm
 
     printf("Enter number of processes: ");
-    if (scanf("%s", buf) < 1)
+    if (scanf("%4095s", buf) < 1)
         { return EXIT_FAILURE; }
     else
         { numProc = strtoimax(buf, (char**)NULL, 10); }
 
     printf("Enter number of resources: ");
-    if (scanf("%s", buf) < 1)
+    if (scanf("%4095s", buf) < 1)
         { return EXIT_FAILURE; }
     else
         { numRes = strtoimax(buf, (char**)NULL, 10); }
