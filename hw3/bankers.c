@@ -108,7 +108,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
             if (request_vector[j] > Need[pr_id][j])
             {
                 fprintf(stderr, "Error: process %d requesting more than needed\n", pr_id);
-                return false;
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -119,11 +119,11 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         bool reqAvail = true; // Assume initially requested is available
         for (int j = 0; reqAvail && j < numRes; j++)
             { if (request_vector[j] > Avail[j]) { reqAvail = false; } }
-        // If requested not available, go to step 1 (beginning of loop)
+        // If requested not available, go to step 1 (beginning of loop) (return false and get called again repeatedly with new request)
         if (!reqAvail) {
             pthread_mutex_unlock(&mutex);
             sem_post(&semaphore);
-            continue;
+            return false;
         }
 
 // Step_3:
@@ -144,7 +144,7 @@ bool bankers_algorithm(int pr_id, int* request_vector)
         }
         else
         {
-            // Else go back to step 1 (return false and get called again repeatedly)
+            // Else go back to step 1 (beginning of loop) (return false and get called again repeatedly with new request)
             puts("Allocation is not safe, cancelling");
             for (int j = 0; j < numRes; j++)
             {
@@ -172,7 +172,8 @@ void* process_simulator(void* pr_id)
     while (true)
     {
         request_simulator(th_id, request_vector);
-        while (!bankers_algorithm(th_id, request_vector));
+        while (!bankers_algorithm(th_id, request_vector))
+            { request_simulator(th_id, request_vector); }
         for (int j = 0; j < numRes; j++)
         {
             // Check if cannot terminate
